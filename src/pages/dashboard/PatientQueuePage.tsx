@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getAppointments } from "../../services/appointment.service";
+import { getAppointments } from "../../services/appointment.Service";
 
 const PatientQueueTV = () => {
   const [patients, setPatients] = useState<any[]>([]);
@@ -44,21 +44,18 @@ const PatientQueueTV = () => {
   }, []);
 
   const activePatients = patients.filter(
-    (p) => p.status?.toLowerCase().trim() !== "completed"
+    (p) => p.status?.toLowerCase().trim() !== "completed",
   );
 
   const currentPatient = activePatients.find(
-    (p) => p.status?.toLowerCase().trim() === "in consultation"
+    (p) => p.status?.toLowerCase().trim() === "in consultation",
   );
 
   return (
     <div className="min-h-screen bg-black text-white p-6">
-
       {/* 🔥 TOP DISPLAY */}
       <div className="text-center mb-10">
-        <h1 className="text-6xl font-bold mb-4 text-yellow-400">
-          Now Serving
-        </h1>
+        <h1 className="text-6xl font-bold mb-4 text-yellow-400">Now Serving</h1>
 
         {currentPatient ? (
           <>
@@ -66,9 +63,7 @@ const PatientQueueTV = () => {
               {currentPatient.token_number}
             </div>
 
-            <div className="text-4xl mt-4">
-              {currentPatient.patient_name}
-            </div>
+            <div className="text-4xl mt-4">{currentPatient.patient_name}</div>
 
             <div className="text-2xl mt-2 text-gray-300">
               Dr {currentPatient.doctor_name}
@@ -110,29 +105,19 @@ const PatientQueueTV = () => {
                     }
                   `}
                 >
-                  <td className="p-3 text-xl">
-                    {p.token_number || i + 1}
-                  </td>
+                  <td className="p-3 text-xl">{p.token_number || i + 1}</td>
 
                   <td className="p-3">{p.patient_name}</td>
 
                   {/* ✅ MOBILE */}
-                  <td className="p-3">
-                    {p.patient_phone || "-"}
-                  </td>
+                  <td className="p-3">{p.patient_phone || "-"}</td>
 
                   {/* ✅ AGE */}
-                  <td className="p-3">
-                    {p.age || "-"}
-                  </td>
+                  <td className="p-3">{p.age || "-"}</td>
 
-                  <td className="p-3">
-                    Dr {p.doctor_name}
-                  </td>
+                  <td className="p-3">Dr {p.doctor_name}</td>
 
-                  <td className="p-3">
-                    {p.status}
-                  </td>
+                  <td className="p-3">{p.status}</td>
                 </tr>
               );
             })}

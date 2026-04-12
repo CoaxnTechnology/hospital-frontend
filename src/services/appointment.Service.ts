@@ -151,8 +151,12 @@ export const nextPatient = async (data: any) => {
  * =========================
  */
 
-export const skipPatient = async (id: number) => {
-  console.log("📤 skipPatient ID:", id);
+export const skipPatient = async (data: {
+  id: number;
+  doctor_id: number;
+  date: string;
+}) => {
+  console.log("📤 skipPatient DATA:", data);
 
   const res = await fetch(`${API_URL}/queue/skip`, {
     method: "POST",
@@ -160,7 +164,7 @@ export const skipPatient = async (id: number) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
     },
-    body: JSON.stringify({ id }),
+    body: JSON.stringify(data),
   });
 
   const json = await res.json();
@@ -169,7 +173,6 @@ export const skipPatient = async (id: number) => {
 
   return json;
 };
-
 /**
  * =========================
  * RECALL PATIENT

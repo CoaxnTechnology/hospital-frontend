@@ -43,7 +43,7 @@ const DispensePage = () => {
     }
 
     try {
-      const res = await getPatientById(id);
+      const res = await getPatientById(Number(id));
 
       if (!res.data) {
         alert("Patient not found");
@@ -103,10 +103,7 @@ const DispensePage = () => {
      BILL CALCULATION
   ====================== */
 
-  const subtotal = cart.reduce(
-    (acc, item) => acc + item.price * item.qty,
-    0
-  );
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
 
   const gst = subtotal * 0.05;
   const total = subtotal + gst - discount;
@@ -160,7 +157,6 @@ const DispensePage = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50 p-10">
         <div className="max-w-6xl mx-auto space-y-10">
-
           {/* HEADER */}
 
           <div>
@@ -178,7 +174,6 @@ const DispensePage = () => {
           {/* PATIENT SECTION */}
 
           <div className="bg-white p-8 rounded-3xl shadow space-y-6">
-
             <h2 className="text-xl font-semibold">Patient Details</h2>
 
             <input
@@ -193,15 +188,21 @@ const DispensePage = () => {
 
             {patientDetails && (
               <div className="bg-gray-50 p-4 rounded-xl space-y-1">
+                <p>
+                  <b>Name:</b> {patientDetails.name}
+                </p>
 
-                <p><b>Name:</b> {patientDetails.name}</p>
+                <p>
+                  <b>Phone:</b> {patientDetails.phone}
+                </p>
 
-                <p><b>Phone:</b> {patientDetails.phone}</p>
+                <p>
+                  <b>Age:</b> {patientDetails.age}
+                </p>
 
-                <p><b>Age:</b> {patientDetails.age}</p>
-
-                <p><b>Gender:</b> {patientDetails.gender}</p>
-
+                <p>
+                  <b>Gender:</b> {patientDetails.gender}
+                </p>
               </div>
             )}
 
@@ -211,26 +212,23 @@ const DispensePage = () => {
               onChange={(e) => setDoctorName(e.target.value)}
               className="border rounded-xl px-4 py-3 w-full"
             />
-
           </div>
 
           {/* MEDICINES */}
 
           <div className="bg-white p-8 rounded-3xl shadow space-y-6">
-
             <h2 className="text-xl font-semibold">Medicines</h2>
 
             <select
               onChange={(e) => {
                 const med = medicineList.find(
-                  (m) => m.id === Number(e.target.value)
+                  (m) => m.id === Number(e.target.value),
                 );
 
                 if (med) addMedicine(med);
               }}
               className="w-full border rounded-xl px-4 py-3"
             >
-
               <option value="">Select Medicine</option>
 
               {medicineList.map((med) => (
@@ -238,7 +236,6 @@ const DispensePage = () => {
                   {med.name} - ₹{med.selling_price}
                 </option>
               ))}
-
             </select>
 
             {cart.length === 0 ? (
@@ -247,7 +244,6 @@ const DispensePage = () => {
               </div>
             ) : (
               <table className="min-w-full text-sm">
-
                 <thead className="bg-gray-100">
                   <tr>
                     <th className="px-4 py-3 text-left">Medicine</th>
@@ -261,19 +257,14 @@ const DispensePage = () => {
                 <tbody>
                   {cart.map((item, index) => (
                     <tr key={item.id} className="border-b">
+                      <td className="px-4 py-3">{item.name}</td>
 
                       <td className="px-4 py-3">
-                        {item.name}
-                      </td>
-
-                      <td className="px-4 py-3">
-
                         <input
                           type="number"
                           value={item.qty}
                           min={1}
                           onChange={(e) => {
-
                             const updated = [...cart];
                             const newQty = Number(e.target.value);
 
@@ -285,23 +276,16 @@ const DispensePage = () => {
                             updated[index].qty = newQty;
 
                             setCart(updated);
-
                           }}
                           className="w-16 border rounded px-2 py-1"
                         />
-
                       </td>
 
-                      <td className="px-4 py-3">
-                        ₹{item.price}
-                      </td>
+                      <td className="px-4 py-3">₹{item.price}</td>
 
-                      <td className="px-4 py-3">
-                        ₹{item.price * item.qty}
-                      </td>
+                      <td className="px-4 py-3">₹{item.price * item.qty}</td>
 
                       <td>
-
                         <button
                           onClick={() =>
                             setCart(cart.filter((c) => c.id !== item.id))
@@ -310,22 +294,17 @@ const DispensePage = () => {
                         >
                           🗑
                         </button>
-
                       </td>
-
                     </tr>
                   ))}
                 </tbody>
-
               </table>
             )}
-
           </div>
 
           {/* SUMMARY */}
 
           <div className="bg-white p-6 rounded-3xl shadow space-y-4">
-
             <div className="flex justify-between">
               <span>Subtotal</span>
               <span>₹{subtotal}</span>
@@ -337,7 +316,6 @@ const DispensePage = () => {
             </div>
 
             <div className="flex justify-between">
-
               <span>Discount</span>
 
               <input
@@ -346,7 +324,6 @@ const DispensePage = () => {
                 onChange={(e) => setDiscount(Number(e.target.value))}
                 className="border rounded px-2 py-1 w-20 text-right"
               />
-
             </div>
 
             <hr />
@@ -355,13 +332,11 @@ const DispensePage = () => {
               <span>Total</span>
               <span>₹{total}</span>
             </div>
-
           </div>
 
           {/* ACTION BUTTONS */}
 
           <div className="flex gap-4">
-
             <button
               onClick={generateBill}
               className="bg-green-600 text-white px-6 py-3 rounded-2xl"
@@ -375,9 +350,7 @@ const DispensePage = () => {
             >
               Print Bill
             </button>
-
           </div>
-
         </div>
       </div>
     </DashboardLayout>
