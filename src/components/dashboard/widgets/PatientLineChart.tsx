@@ -7,32 +7,44 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { month: "Jan", patients: 100 },
-  { month: "Feb", patients: 70 },
-  { month: "Mar", patients: 20 },
-  { month: "Apr", patients: 100 },
-  { month: "May", patients: 120 },
-  { month: "Jun", patients: 50 },
-  { month: "Jul", patients: 70 },
-  { month: "Aug", patients: 50 },
-  { month: "Sep", patients: 100 },
-  { month: "Oct", patients: 20 },
-  { month: "Nov", patients: 50 },
-  { month: "Dec", patients: 90 },
-];
+import { useEffect, useState } from "react";
 
 const PatientLineChart = () => {
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchChart = async () => {
+      try {
+        const startDate = "2026-01-01";
+        const endDate = "2026-12-31";
+
+        const res = await fetch(
+          `${import.meta.env.VITE_BASE_URL}/api/dashboard?startDate=${startDate}&endDate=${endDate}`
+        );
+
+        const json = await res.json();
+
+        if (json.success) {
+          setData(json.data.chart || []);
+        }
+      } catch (err) {
+        console.error("❌ Chart fetch error:", err);
+      }
+    };
+
+    fetchChart();
+  }, []);
+
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition p-6">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-lg font-semibold text-gray-800">
-          Patient Total
+          Total Patient
         </h4>
+
         <span className="text-sm text-green-600 font-medium flex items-center gap-1">
-          <i className="fa fa-caret-up"></i> 15% Higher than Last Month
+          <i className="fa fa-caret-up"></i> Live Data
         </span>
       </div>
 
@@ -48,9 +60,11 @@ const PatientLineChart = () => {
             </defs>
 
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
+
             <Line
               type="monotone"
               dataKey="patients"

@@ -92,15 +92,24 @@ const Consultant = () => {
     try {
       const today = new Date().toISOString().slice(0, 10);
 
+      // 🔥 API CALL
       await skipPatient({
         id,
         doctor_id,
         date: today,
       });
 
+      // 🔥 INSTANT UI UPDATE
+      setAppointments((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: "Skipped" } : item,
+        ),
+      );
+
+      // 🔥 OPTIONAL REFRESH
       loadQueue();
     } catch (err) {
-      console.error(err);
+      console.error("Skip Error:", err);
     }
   };
 
