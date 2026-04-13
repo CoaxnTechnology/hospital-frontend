@@ -1,9 +1,10 @@
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import userImg from "../../assets/icons/user-06.jpg";
 import { getDoctorById, updateDoctor } from "../../services/doctor.service";
-
+import { getDepartments } from "../../services/department.service";
 type DoctorForm = {
   firstName: string;
   lastName: string;
@@ -34,7 +35,7 @@ const EditDoctor = () => {
 
   // ✅ ORIGINAL DATA (partial update ke liye)
   const [original, setOriginal] = useState<DoctorForm | null>(null);
-
+  const [departments, setDepartments] = useState<any[]>([]);
   const [preview, setPreview] = useState<string>(userImg);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
@@ -50,12 +51,13 @@ const EditDoctor = () => {
       const res = await getDoctorById(id);
       if (res?.success) {
         const d = res.data;
+        console.log("Loaded doctor data:", d);
 
         const mapped: DoctorForm = {
           firstName: d.first_name || "",
           lastName: d.last_name || "",
           email: d.email || "",
-          dob: d.dob || "", // ✅ already YYYY-MM-DD from backend
+          dob: d.dob ? d.dob.split("T")[0] : "", // ✅ already YYYY-MM-DD from backend
           gender: d.gender || "",
           phone: d.phone || "",
           address: d.address || "",
@@ -66,18 +68,33 @@ const EditDoctor = () => {
         setForm(mapped);
         setOriginal(mapped);
 
-        if (d.image) setPreview(d.image);
+        if (d.image) {
+          setPreview(`${BASE_URL}${d.image}`);
+        }
       }
     })();
   }, [id]);
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await getDepartments();
+        if (res.success) {
+          setDepartments(res.data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
 
+    fetchDepartments();
+  }, []);
   /* ======================
      HANDLE CHANGE
      ====================== */
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -98,17 +115,13 @@ const EditDoctor = () => {
     if (form.lastName !== original.lastName)
       formData.append("last_name", form.lastName);
 
-    if (form.email !== original.email)
-      formData.append("email", form.email);
+    if (form.email !== original.email) formData.append("email", form.email);
 
-    if (form.dob !== original.dob)
-      formData.append("dob", form.dob); // YYYY-MM-DD
+    if (form.dob !== original.dob) formData.append("dob", form.dob); // YYYY-MM-DD
 
-    if (form.gender !== original.gender)
-      formData.append("gender", form.gender);
+    if (form.gender !== original.gender) formData.append("gender", form.gender);
 
-    if (form.phone !== original.phone)
-      formData.append("phone", form.phone);
+    if (form.phone !== original.phone) formData.append("phone", form.phone);
 
     if (form.address !== original.address)
       formData.append("address", form.address);
@@ -293,12 +306,19 @@ const EditDoctor = () => {
                 name="department"
                 value={form.department}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2
-                focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2"
               >
-                <option>Cardiology</option>
-                <option>Neurology</option>
-                <option>Orthopedics</option>
+                <option value="">Select department</option>
+
+                {departments.length > 0 ? (
+                  departments.map((dept: any) => (
+                    <option key={dept.id} value={dept.department_name}>
+                      {dept.department_name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No department found</option>
+                )}
               </select>
             </div>
 
@@ -308,30 +328,27 @@ const EditDoctor = () => {
                 Profile Image
               </label>
 
-              <div className="flex items-center gap-6">
-                <div className="relative">
-                  <img
-                    src={preview}
-                    className="w-20 h-20 rounded-full object-cover
-                    border border-gray-200 shadow-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => fileRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full
-                    bg-blue-600 text-white flex items-center justify-center
-                    hover:bg-blue-700 transition shadow"
-                  >
-                    <i className="fa fa-camera text-sm"></i>
-                  </button>
-                </div>
+              <div className="flex items-center gap-4">
+                <img
+                  src={preview}
+                  className="w-20 h-20 rounded-full object-cover border cursor-pointer"
+                  onClick={() => fileRef.current?.click()}
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
+                  Change Image
+                </button>
               </div>
 
               <input
                 ref={fileRef}
                 type="file"
                 accept="image/*"
-                className="hidden"
+                hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) {

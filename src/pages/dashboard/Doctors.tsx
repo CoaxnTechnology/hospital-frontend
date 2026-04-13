@@ -1,3 +1,4 @@
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { getDoctors } from "../../services/doctor.service";
@@ -136,10 +137,13 @@ const Doctors = () => {
                   >
                     <td className="px-4 py-3">
                       <img
-                        src={doc.image || "/default-avatar.png"}
+                        src={
+                          doc.image
+                            ? `${BASE_URL}${doc.image}`
+                            : "/default-avatar.png"
+                        }
                         alt={doc.first_name}
-                        className="w-14 h-14 rounded-full object-cover
-                        border border-gray-200 shadow-sm"
+                        className="w-14 h-14 rounded-full object-cover border"
                       />
                     </td>
 

@@ -56,9 +56,11 @@ const Doctors = () => {
               <div className="overflow-hidden">
                 <img
                   src={
-                    doc.image?.startsWith("http")
-                      ? doc.image
-                      : `${BASE_URL}/${doc.image}`
+                    doc.image
+                      ? doc.image.startsWith("http")
+                        ? doc.image
+                        : `${BASE_URL}${doc.image}`
+                      : "/default-avatar.png"
                   }
                   alt={doc.first_name}
                   className="w-full h-72 object-cover group-hover:scale-105 transition duration-300"
