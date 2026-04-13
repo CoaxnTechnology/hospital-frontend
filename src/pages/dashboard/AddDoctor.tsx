@@ -3,7 +3,8 @@ import { useRef, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import userImg from "../../assets/icons/user-06.jpg";
 import { createDoctor } from "../../services/doctor.service";
-
+import { useEffect } from "react";
+import { getDepartments } from "../../services/department.service";
 const AddDoctor = () => {
   const navigate = useNavigate();
 
@@ -22,7 +23,7 @@ const AddDoctor = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [departments, setDepartments] = useState<any[]>([]);
   // Avatar preview state
   const [preview, setPreview] = useState<string>(userImg);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -30,7 +31,7 @@ const AddDoctor = () => {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -56,11 +57,27 @@ const AddDoctor = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await getDepartments();
 
+        if (res.success && res.data) {
+          setDepartments(res.data);
+        } else {
+          setDepartments([]);
+        }
+      } catch (err) {
+        console.error("Department fetch error", err);
+        setDepartments([]);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
-
         {/* HEADER */}
         <div className="flex items-center gap-4">
           <button
@@ -72,19 +89,13 @@ const AddDoctor = () => {
           </button>
 
           <div>
-            <h2 className="text-2xl font-semibold text-gray-800">
-              Add Doctor
-            </h2>
-            <p className="text-sm text-gray-500">
-              Create a new doctor profile
-            </p>
+            <h2 className="text-2xl font-semibold text-gray-800">Add Doctor</h2>
+            <p className="text-sm text-gray-500">Create a new doctor profile</p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded">
-            {error}
-          </div>
+          <div className="bg-red-100 text-red-700 p-3 rounded">{error}</div>
         )}
 
         {/* FORM CARD */}
@@ -93,7 +104,6 @@ const AddDoctor = () => {
             onSubmit={handleSubmit}
             className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-
             {/* FIRST NAME */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -167,7 +177,8 @@ const AddDoctor = () => {
                     name="gender"
                     value="male"
                     onChange={handleChange}
-                  /> Male
+                  />{" "}
+                  Male
                 </label>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -175,7 +186,8 @@ const AddDoctor = () => {
                     name="gender"
                     value="female"
                     onChange={handleChange}
-                  /> Female
+                  />{" "}
+                  Female
                 </label>
               </div>
             </div>
@@ -219,28 +231,51 @@ const AddDoctor = () => {
                 required
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2
-                focus:ring-2 focus:ring-blue-500 focus:outline-none"
+  focus:ring-2 focus:ring-blue-500 focus:outline-none"
               >
                 <option value="">Select department</option>
-                <option>Cardiology</option>
-                <option>Neurology</option>
-                <option>Orthopedics</option>
+
+                {departments.length > 0 ? (
+                  departments.map((dept: any) => (
+                    <option key={dept.id} value={dept.name}>
+                      {dept.name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>No department found</option>
+                )}
               </select>
             </div>
 
             {/* AVATAR */}
-            <div>
+            <div className="flex items-center gap-4">
+              {/* IMAGE PREVIEW */}
               <img
                 src={preview}
-                className="w-20 h-20 rounded-full object-cover border"
+                className="w-20 h-20 rounded-full object-cover border cursor-pointer"
+                onClick={() => fileRef.current?.click()}
               />
+
+              {/* BUTTON */}
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              >
+                Choose Image
+              </button>
+
+              {/* FILE INPUT */}
               <input
                 ref={fileRef}
                 type="file"
+                accept="image/*"
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) setPreview(URL.createObjectURL(file));
+                  if (file) {
+                    setPreview(URL.createObjectURL(file));
+                  }
                 }}
               />
             </div>
@@ -277,7 +312,6 @@ const AddDoctor = () => {
                 {loading ? "Saving..." : "Create Doctor"}
               </button>
             </div>
-
           </form>
         </div>
       </div>
