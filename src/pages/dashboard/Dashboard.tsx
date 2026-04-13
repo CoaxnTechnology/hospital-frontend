@@ -1,60 +1,204 @@
+import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import AppointmentTable from "../../components/dashboard/tables/AppointmentTable";
-import NewPatientsTable from "../../components/dashboard/tables/NewPatientsTable";
 import DoctorList from "../../components/dashboard/widgets/DoctorList";
-import HospitalManagementChart from "../../components/dashboard/widgets/HospitalManagementChart";
 import PatientLineChart from "../../components/dashboard/widgets/PatientLineChart";
-import PatientsBarChart from "../../components/dashboard/widgets/PatientsBarChart";
 import StatCard from "../../components/dashboard/widgets/StatCard";
+import { getDashboardData } from "../../services/dashboard.service";
 
 const Dashboard = () => {
+  // 🔥 FILTER STATE
+  const [filterType, setFilterType] = useState("today");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // 🔥 DATA STATE
+  const [stats, setStats] = useState<any>({});
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [chart, setChart] = useState<any[]>([]);
+
+  // 🔥 PRESET FILTER
+  const handleFilterChange = (value: string) => {
+    setFilterType(value);
+
+    const today = new Date();
+    let start = new Date();
+    let end = new Date();
+
+    switch (value) {
+      case "today":
+        break;
+      case "tomorrow":
+        start.setDate(today.getDate() + 1);
+        end.setDate(today.getDate() + 1);
+        break;
+
+      case "30days":
+        start.setDate(today.getDate() - 30);
+        break;
+
+      case "3months":
+        start.setMonth(today.getMonth() - 3);
+        break;
+
+      case "6months":
+        start.setMonth(today.getMonth() - 6);
+        break;
+    }
+
+    setStartDate(start.toISOString().split("T")[0]);
+    setEndDate(end.toISOString().split("T")[0]);
+  };
+
+  // 🔥 API CALL (CLEAN)
+  const fetchDashboard = async () => {
+    try {
+      const data = await getDashboardData(startDate, endDate);
+
+      console.log("API DATA:", data);
+
+      setStats(data?.stats || {});
+      setAppointments(data?.appointments || []);
+      setChart(data?.chart || []);
+    } catch (err) {
+      console.error("Dashboard Error:", err);
+    }
+  };
+
+  // 🔥 DEFAULT LOAD
+  useEffect(() => {
+    handleFilterChange("today");
+  }, []);
+
+  // 🔥 AUTO FETCH
+  useEffect(() => {
+    if (startDate && endDate) {
+      fetchDashboard();
+    }
+  }, [startDate, endDate]);
+
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
-        {/* 🔥 STATS CARDS */}
+      <style>
+        {`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
+
+      <div className="p-6 space-y-8">
+
+        {/* 🔥 FILTER UI */}
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <h2 className="text-xl font-semibold text-gray-700">Dashboard</h2>
+
+          <div className="bg-white px-4 py-3 rounded-xl shadow flex flex-wrap items-center gap-3 border">
+
+            <select
+              value={filterType}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="border px-3 py-2 rounded-lg text-sm"
+            >
+              <option value="today">Today</option>
+              <option value="tomorrow">Tomorrow</option>
+              <option value="30days">This Month</option>
+              <option value="6months">Last 6 Months</option>
+
+            </select>
+
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => {
+                setFilterType("custom");
+                setStartDate(e.target.value);
+              }}
+              className="border px-3 py-2 rounded-lg text-sm"
+            />
+
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => {
+                setFilterType("custom");
+                setEndDate(e.target.value);
+              }}
+              className="border px-3 py-2 rounded-lg text-sm"
+            />
+
+            <button
+              onClick={fetchDashboard}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
+            >
+              Apply
+            </button>
+
+          </div>
+        </div>
+
+        {/* 🔥 STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           <StatCard
             title="Doctors"
-            value={2}
+            value={stats?.total_doctors || 0}
             gradient="bg-gradient-to-r from-blue-500 to-cyan-500"
             icon={<i className="fa fa-stethoscope"></i>}
           />
-
           <StatCard
             title="Appointments"
-            value={2}
+            value={stats?.total_appointments || 0}
             gradient="bg-gradient-to-r from-green-500 to-emerald-500"
             icon={<i className="fa fa-calendar-check-o"></i>}
           />
-
           <StatCard
-            title="Attend"
-            value={72}
+            title="Completed"
+            value={stats?.completed || 0}
             gradient="bg-gradient-to-r from-indigo-500 to-purple-500"
             icon={<i className="fa fa-user-md"></i>}
           />
-
           <StatCard
             title="Pending"
-            value={618}
+            value={stats?.pending || 0}
             gradient="bg-gradient-to-r from-orange-400 to-amber-500"
             icon={<i className="fa fa-heartbeat"></i>}
           />
         </div>
 
-        {/* 📊 CHARTS */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <PatientLineChart />
-          <PatientsBarChart />
-        </div>
+        {/* 🚀 MAIN */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <AppointmentTable />
-          <DoctorList />
+
+          <div className="lg:col-span-2 bg-white rounded-xl shadow p-4 flex flex-col">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">
+              Upcoming Appointments
+            </h3>
+
+            <div className="overflow-y-auto max-h-[300px] no-scrollbar">
+              <AppointmentTable data={appointments} />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow p-4">
+            <h3 className="text-lg font-semibold text-gray-700 mb-3">
+              Doctors
+            </h3>
+            <DoctorList />
+          </div>
+
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-  <NewPatientsTable />
-  <HospitalManagementChart />
-</div>
+
+        {/* 📊 CHART */}
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="text-lg font-semibold text-gray-700 mb-3">
+            Patient Overview
+          </h3>
+          <PatientLineChart data={chart} />
+        </div>
+
       </div>
     </DashboardLayout>
   );
