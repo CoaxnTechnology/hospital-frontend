@@ -147,7 +147,9 @@ const Doctors = () => {
                     <td className="px-4 py-3">{doc.first_name}</td>
                     <td className="px-4 py-3">{doc.last_name}</td>
                     <td className="px-4 py-3">{doc.email}</td>
-                    <td className="px-4 py-3">{doc.dob}</td>
+                    <td className="px-4 py-3">
+                      {new Date(doc.dob).toLocaleDateString("en-IN")}
+                    </td>
                     <td className="px-4 py-3">{doc.gender}</td>
                     <td className="px-4 py-3 max-w-xs truncate">
                       {doc.address}

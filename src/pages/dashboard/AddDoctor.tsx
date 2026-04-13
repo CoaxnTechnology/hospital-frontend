@@ -237,8 +237,8 @@ const AddDoctor = () => {
 
                 {departments.length > 0 ? (
                   departments.map((dept: any) => (
-                    <option key={dept.id} value={dept.name}>
-                      {dept.name}
+                    <option key={dept.id} value={dept.department_name}>
+                      {dept.department_name}
                     </option>
                   ))
                 ) : (
@@ -320,3 +320,4 @@ const AddDoctor = () => {
 };
 
 export default AddDoctor;
+//VITE_BASE_URL=https://hospital.clinicalgynecologists.space
