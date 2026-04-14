@@ -5,7 +5,9 @@ import DoctorList from "../../components/dashboard/widgets/DoctorList";
 import PatientLineChart from "../../components/dashboard/widgets/PatientLineChart";
 import StatCard from "../../components/dashboard/widgets/StatCard";
 import { getDashboardData } from "../../services/dashboard.service";
-
+type Props = {
+  data: any[];
+};
 const Dashboard = () => {
   // 🔥 FILTER STATE
   const [filterType, setFilterType] = useState("today");
@@ -65,12 +67,28 @@ const Dashboard = () => {
   const fetchDashboard = async () => {
     try {
       const data = await getDashboardData(startDate, endDate);
-
+      console.log("CHART DATA:", data?.chart);
       console.log("API DATA:", data);
 
       setStats(data?.stats || {});
       setAppointments(data?.appointments || []);
-      setChart(data?.chart || []);
+      // 🔥 CHART ALWAYS MONTH DATA
+      const today = new Date();
+      const start = new Date(today.getFullYear(), today.getMonth(), 1);
+      const end = new Date();
+
+      const formatLocalDate = (date: Date) => {
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - offset * 60000);
+        return localDate.toISOString().split("T")[0];
+      };
+
+      const chartData = await getDashboardData(
+        formatLocalDate(start),
+        formatLocalDate(end),
+      );
+
+      setChart(chartData?.chart || []);
     } catch (err) {
       console.error("Dashboard Error:", err);
     }
@@ -91,15 +109,11 @@ const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="p-6 space-y-8">
-
         {/* 🔥 FILTER UI */}
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-xl font-semibold text-gray-700">
-            Dashboard
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-700">Dashboard</h2>
 
           <div className="bg-white px-4 py-3 rounded-xl shadow flex flex-wrap items-center gap-3 border">
-
             {/* SELECT */}
             <select
               value={filterType}
@@ -142,21 +156,39 @@ const Dashboard = () => {
             >
               Apply
             </button>
-
           </div>
         </div>
 
         {/* 🔥 STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          <StatCard title="Doctors" value={stats?.total_doctors || 0} gradient="bg-gradient-to-r from-blue-500 to-cyan-500" icon={<i className="fa fa-stethoscope"></i>} />
-          <StatCard title="Appointments" value={stats?.total_appointments || 0} gradient="bg-gradient-to-r from-green-500 to-emerald-500" icon={<i className="fa fa-calendar-check-o"></i>} />
-          <StatCard title="Completed" value={stats?.completed || 0} gradient="bg-gradient-to-r from-indigo-500 to-purple-500" icon={<i className="fa fa-user-md"></i>} />
-          <StatCard title="Pending" value={stats?.pending || 0} gradient="bg-gradient-to-r from-orange-400 to-amber-500" icon={<i className="fa fa-heartbeat"></i>} />
+          <StatCard
+            title="Doctors"
+            value={stats?.total_doctors || 0}
+            gradient="bg-gradient-to-r from-blue-500 to-cyan-500"
+            icon={<i className="fa fa-stethoscope"></i>}
+          />
+          <StatCard
+            title="Appointments"
+            value={stats?.total_appointments || 0}
+            gradient="bg-gradient-to-r from-green-500 to-emerald-500"
+            icon={<i className="fa fa-calendar-check-o"></i>}
+          />
+          <StatCard
+            title="Completed"
+            value={stats?.completed || 0}
+            gradient="bg-gradient-to-r from-indigo-500 to-purple-500"
+            icon={<i className="fa fa-user-md"></i>}
+          />
+          <StatCard
+            title="Pending"
+            value={stats?.pending || 0}
+            gradient="bg-gradient-to-r from-orange-400 to-amber-500"
+            icon={<i className="fa fa-heartbeat"></i>}
+          />
         </div>
 
         {/* 🚀 MAIN */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
           {/* APPOINTMENTS */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow p-4 flex flex-col">
             <h3 className="text-lg font-semibold text-gray-700 mb-3">
@@ -175,7 +207,6 @@ const Dashboard = () => {
             </h3>
             <DoctorList />
           </div>
-
         </div>
 
         {/* 📊 CHART */}
@@ -185,7 +216,6 @@ const Dashboard = () => {
           </h3>
           <PatientLineChart data={chart} />
         </div>
-
       </div>
     </DashboardLayout>
   );

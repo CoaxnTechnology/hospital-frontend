@@ -7,36 +7,15 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useEffect, useState } from "react";
 
-const PatientLineChart = () => {
-  const [data, setData] = useState<any[]>([]);
+type Props = {
+  data: any[];
+};
 
-  useEffect(() => {
-    const fetchChart = async () => {
-      try {
-        const startDate = "2026-01-01";
-        const endDate = "2026-12-31";
-
-        const res = await fetch(
-          `${import.meta.env.VITE_BASE_URL}/api/dashboard?startDate=${startDate}&endDate=${endDate}`
-        );
-
-        const json = await res.json();
-
-        if (json.success) {
-          setData(json.data.chart || []);
-        }
-      } catch (err) {
-        console.error("❌ Chart fetch error:", err);
-      }
-    };
-
-    fetchChart();
-  }, []);
-
+const PatientLineChart = ({ data }: Props) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm hover:shadow-lg transition p-6">
+
       {/* HEADER */}
       <div className="flex justify-between items-center mb-4">
         <h4 className="text-lg font-semibold text-gray-800">
@@ -60,7 +39,6 @@ const PatientLineChart = () => {
             </defs>
 
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-
             <XAxis dataKey="month" />
             <YAxis />
             <Tooltip />
