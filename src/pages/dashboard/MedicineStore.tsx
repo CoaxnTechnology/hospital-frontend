@@ -12,10 +12,21 @@ type Medicine = {
   selling_price: number;
   quantity: number;
 };
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "-";
 
+  const date = new Date(dateStr);
+
+  return date.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 const MedicineStore = () => {
   const [search, setSearch] = useState("");
   const [medicines, setMedicines] = useState<Medicine[]>([]);
+  const [loading, setLoading] = useState(true);
 
   /* ================= LOAD MEDICINES ================= */
   useEffect(() => {
@@ -23,8 +34,17 @@ const MedicineStore = () => {
   }, []);
 
   const loadMedicines = async () => {
-    const data = await getMedicines();
-    setMedicines(data.data);
+    try {
+      setLoading(true);
+
+      const data = await getMedicines();
+
+      setMedicines(data.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* ================= DELETE ================= */
@@ -102,6 +122,15 @@ const MedicineStore = () => {
             >
               + Add Medicine
             </Link>
+
+            {/* 🔥 ADD THIS BUTTON */}
+            <a
+              href={`${import.meta.env.VITE_BASE_URL}/public/sample/medicine_upload_template.csv`}
+              download
+              className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
+            >
+              ⬇ Sample CSV
+            </a>
           </div>
         </div>
 
@@ -156,65 +185,90 @@ const MedicineStore = () => {
             </thead>
 
             <tbody>
-              {filteredMedicines.map((med) => (
-                <tr key={med.id} className="border-t hover:bg-gray-50">
-                  {/* MEDICINE */}
-                  <td className="px-6 py-4">
-                    <div className="font-semibold">{med.name}</div>
-                    <div className="text-xs text-gray-400">
-                      MED-{String(med.id).padStart(5, "0")}
-                    </div>
-                  </td>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i} className="border-t animate-pulse">
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-20"></div>
+                    </td>
 
-                  {/* CATEGORY */}
-                  <td className="px-6 py-4">
-                    <span className="bg-gray-100 px-3 py-1 rounded text-xs">
-                      {med.category}
-                    </span>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-20"></div>
+                    </td>
 
-                  {/* STOCK */}
-                  <td className="px-6 py-4">
-                    <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded text-xs">
-                      {med.quantity} Pcs
-                    </span>
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    </td>
 
-                  {/* PRICE */}
-                  <td className="px-6 py-4">
-                    ₹ {Number(med.selling_price).toFixed(2)}
-                  </td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-16"></div>
+                    </td>
 
-                  {/* EXPIRY */}
-                  <td className="px-6 py-4 text-red-500">{med.expiry_date}</td>
+                    <td className="px-6 py-4">
+                      <div className="h-4 bg-gray-300 rounded w-24"></div>
+                    </td>
 
-                  {/* ACTION BUTTONS */}
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
-                      {/* EDIT */}
-                      <Link to={`/store/edit_med/${med.id}`}>
+                    <td className="px-6 py-4 text-right">
+                      <div className="h-8 bg-gray-300 rounded w-16 ml-auto"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : filteredMedicines.length > 0 ? (
+                filteredMedicines.map((med) => (
+                  <tr key={med.id} className="border-t hover:bg-gray-50">
+                    {/* MEDICINE */}
+                    <td className="px-6 py-4">
+                      <div className="font-semibold">{med.name}</div>
+                      <div className="text-xs text-gray-400">
+                        MED-{String(med.id).padStart(5, "0")}
+                      </div>
+                    </td>
+
+                    {/* CATEGORY */}
+                    <td className="px-6 py-4">
+                      <span className="bg-gray-100 px-3 py-1 rounded text-xs">
+                        {med.category}
+                      </span>
+                    </td>
+
+                    {/* STOCK */}
+                    <td className="px-6 py-4">
+                      <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded text-xs">
+                        {med.quantity} Pcs
+                      </span>
+                    </td>
+
+                    {/* PRICE */}
+                    <td className="px-6 py-4">
+                      ₹ {Number(med.selling_price).toFixed(2)}
+                    </td>
+
+                    {/* EXPIRY */}
+                    <td className="px-6 py-4 text-red-500">
+                      {formatDate(med.expiry_date)}
+                    </td>
+
+                    {/* ACTION */}
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end gap-2">
+                        <Link to={`/store/edit_med/${med.id}`}>
+                          <button className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition">
+                            ✏
+                          </button>
+                        </Link>
+
                         <button
-                          className="w-9 h-9 flex items-center justify-center rounded-lg bg-blue-100 text-blue-600 hover:bg-blue-200 transition"
-                          title="Edit"
+                          onClick={() => handleDelete(med.id)}
+                          className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
                         >
-                          ✏
+                          🗑
                         </button>
-                      </Link>
-
-                      {/* DELETE */}
-                      <button
-                        onClick={() => handleDelete(med.id)}
-                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition"
-                        title="Delete"
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredMedicines.length === 0 && (
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
                 <tr>
                   <td colSpan={6} className="text-center py-10 text-gray-400">
                     No medicines found

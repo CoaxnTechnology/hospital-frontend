@@ -8,9 +8,10 @@ const AddBranch = () => {
 
   const [form, setForm] = useState({
     name: "",
-    area: "",   // ✅ NEW FIELD
+    area: "", // ✅ NEW FIELD
     address: "",
     city: "",
+    phone: "",
   });
 
   const handleSubmit = async (e: any) => {
@@ -22,11 +23,9 @@ const AddBranch = () => {
   return (
     <DashboardLayout>
       <div className="p-6 max-w-xl mx-auto">
-
         <h2 className="text-xl font-semibold mb-4">Add Branch</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-
           {/* 🔥 NAME */}
           <input
             placeholder="Branch Name"
@@ -54,12 +53,17 @@ const AddBranch = () => {
             className="w-full border p-2 rounded"
             onChange={(e) => setForm({ ...form, address: e.target.value })}
           />
+          {/* 🔥 PHONE */}
+          <input
+            placeholder="Mobile Number"
+            className="w-full border p-2 rounded"
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
 
           {/* 🔥 BUTTON */}
           <button className="bg-blue-600 text-white px-4 py-2 rounded">
             Save
           </button>
-
         </form>
       </div>
     </DashboardLayout>

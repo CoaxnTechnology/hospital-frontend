@@ -14,17 +14,8 @@ type Props = {
 const AppointmentTable = ({ data }: Props) => {
   const navigate = useNavigate();
 
-  // 👉 TODAY DATE
-  const today = new Date().toISOString().split("T")[0];
-
-  // 👉 FILTER TODAY DATA
-  const todayAppointments = data.filter((item: any) => {
-    const itemDate = item.date.split("T")[0];
-    return itemDate === today;
-  });
-
-  // 👉 FORMAT DATA
-  const appointments: Appointment[] = todayAppointments.map((item: any) => ({
+  // ✅ DIRECT USE DATA (NO FILTER)
+  const appointments: Appointment[] = data.map((item: any) => ({
     patientName: item.patient_name,
     doctorName: item.doctor_name,
     time: item.time,
@@ -46,7 +37,7 @@ const AppointmentTable = ({ data }: Props) => {
         {appointments.length === 0 ? (
           <tr>
             <td colSpan={4} className="text-center p-6 text-gray-400">
-              No appointments today
+              No appointments found
             </td>
           </tr>
         ) : (
@@ -65,14 +56,17 @@ const AppointmentTable = ({ data }: Props) => {
               </td>
 
               <td className="px-6 py-4">
-                {item.time}
+                {new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </td>
 
               <td className="px-6 py-4">
                 <span
                   className={`px-3 py-1 text-xs rounded-full font-medium
                   ${
-                    item.status === "Confirmed"
+                    item.status === "Completed"
                       ? "bg-green-100 text-green-700"
                       : item.status === "Pending"
                       ? "bg-yellow-100 text-yellow-700"

@@ -51,7 +51,7 @@ const Settings = () => {
       color: "bg-red-100 text-red-600",
     },
      {
-      label: "service Section",
+      label: "Service Section",
       path: "/settings/service",
       color: "bg-red-100 text-red-600",
     },
@@ -61,7 +61,7 @@ const Settings = () => {
       color: "bg-red-100 text-red-600",
     },
     {
-      label: "branch Section",
+      label: "Branch Section",
       path: "/settings/branch",
       color: "bg-red-100 text-red-600",
     },

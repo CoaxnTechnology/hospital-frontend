@@ -17,7 +17,14 @@ const Dashboard = () => {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [chart, setChart] = useState<any[]>([]);
 
-  // 🔥 PRESET FILTER
+  // ✅ LOCAL DATE FIX (IMPORTANT)
+  const formatLocalDate = (date: Date) => {
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60000);
+    return localDate.toISOString().split("T")[0];
+  };
+
+  // 🔥 FILTER LOGIC (FINAL)
   const handleFilterChange = (value: string) => {
     setFilterType(value);
 
@@ -27,30 +34,34 @@ const Dashboard = () => {
 
     switch (value) {
       case "today":
+        start = new Date();
+        end = new Date();
         break;
+
       case "tomorrow":
         start.setDate(today.getDate() + 1);
         end.setDate(today.getDate() + 1);
         break;
 
-      case "30days":
-        start.setDate(today.getDate() - 30);
-        break;
-
-      case "3months":
-        start.setMonth(today.getMonth() - 3);
+      case "thisMonth":
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date();
         break;
 
       case "6months":
         start.setMonth(today.getMonth() - 6);
+        end = new Date();
         break;
+
+      case "custom":
+        return; // custom me manual input use hoga
     }
 
-    setStartDate(start.toISOString().split("T")[0]);
-    setEndDate(end.toISOString().split("T")[0]);
+    setStartDate(formatLocalDate(start));
+    setEndDate(formatLocalDate(end));
   };
 
-  // 🔥 API CALL (CLEAN)
+  // 🔥 API CALL
   const fetchDashboard = async () => {
     try {
       const data = await getDashboardData(startDate, endDate);
@@ -79,26 +90,17 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <style>
-        {`
-          .no-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}
-      </style>
-
       <div className="p-6 space-y-8">
 
         {/* 🔥 FILTER UI */}
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <h2 className="text-xl font-semibold text-gray-700">Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-700">
+            Dashboard
+          </h2>
 
           <div className="bg-white px-4 py-3 rounded-xl shadow flex flex-wrap items-center gap-3 border">
 
+            {/* SELECT */}
             <select
               value={filterType}
               onChange={(e) => handleFilterChange(e.target.value)}
@@ -106,11 +108,12 @@ const Dashboard = () => {
             >
               <option value="today">Today</option>
               <option value="tomorrow">Tomorrow</option>
-              <option value="30days">This Month</option>
+              <option value="thisMonth">This Month</option>
               <option value="6months">Last 6 Months</option>
-
+              <option value="custom">Custom</option>
             </select>
 
+            {/* START DATE */}
             <input
               type="date"
               value={startDate}
@@ -121,6 +124,7 @@ const Dashboard = () => {
               className="border px-3 py-2 rounded-lg text-sm"
             />
 
+            {/* END DATE */}
             <input
               type="date"
               value={endDate}
@@ -131,6 +135,7 @@ const Dashboard = () => {
               className="border px-3 py-2 rounded-lg text-sm"
             />
 
+            {/* APPLY */}
             <button
               onClick={fetchDashboard}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
@@ -143,45 +148,27 @@ const Dashboard = () => {
 
         {/* 🔥 STATS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          <StatCard
-            title="Doctors"
-            value={stats?.total_doctors || 0}
-            gradient="bg-gradient-to-r from-blue-500 to-cyan-500"
-            icon={<i className="fa fa-stethoscope"></i>}
-          />
-          <StatCard
-            title="Appointments"
-            value={stats?.total_appointments || 0}
-            gradient="bg-gradient-to-r from-green-500 to-emerald-500"
-            icon={<i className="fa fa-calendar-check-o"></i>}
-          />
-          <StatCard
-            title="Completed"
-            value={stats?.completed || 0}
-            gradient="bg-gradient-to-r from-indigo-500 to-purple-500"
-            icon={<i className="fa fa-user-md"></i>}
-          />
-          <StatCard
-            title="Pending"
-            value={stats?.pending || 0}
-            gradient="bg-gradient-to-r from-orange-400 to-amber-500"
-            icon={<i className="fa fa-heartbeat"></i>}
-          />
+          <StatCard title="Doctors" value={stats?.total_doctors || 0} gradient="bg-gradient-to-r from-blue-500 to-cyan-500" icon={<i className="fa fa-stethoscope"></i>} />
+          <StatCard title="Appointments" value={stats?.total_appointments || 0} gradient="bg-gradient-to-r from-green-500 to-emerald-500" icon={<i className="fa fa-calendar-check-o"></i>} />
+          <StatCard title="Completed" value={stats?.completed || 0} gradient="bg-gradient-to-r from-indigo-500 to-purple-500" icon={<i className="fa fa-user-md"></i>} />
+          <StatCard title="Pending" value={stats?.pending || 0} gradient="bg-gradient-to-r from-orange-400 to-amber-500" icon={<i className="fa fa-heartbeat"></i>} />
         </div>
 
         {/* 🚀 MAIN */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+          {/* APPOINTMENTS */}
           <div className="lg:col-span-2 bg-white rounded-xl shadow p-4 flex flex-col">
             <h3 className="text-lg font-semibold text-gray-700 mb-3">
               Upcoming Appointments
             </h3>
 
-            <div className="overflow-y-auto max-h-[300px] no-scrollbar">
+            <div className="overflow-y-auto max-h-[300px]">
               <AppointmentTable data={appointments} />
             </div>
           </div>
 
+          {/* DOCTORS */}
           <div className="bg-white rounded-xl shadow p-4">
             <h3 className="text-lg font-semibold text-gray-700 mb-3">
               Doctors

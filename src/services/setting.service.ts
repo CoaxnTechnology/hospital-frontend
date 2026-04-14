@@ -283,15 +283,25 @@ export const getSignature = async () => {
     console.error("❌ ERROR:", error);
   }
 };
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
 const HERO_API = `${BASE_URL}/api/hero`;
+
 /**
  * =========================
  * GET HERO
  * =========================
  */
 export const getHero = async () => {
-  const res = await fetch(HERO_API);
-  return res.json();
+  try {
+    const res = await fetch(HERO_API);
+
+    if (!res.ok) throw new Error("Failed to fetch hero");
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ GET HERO ERROR:", error);
+    return [];
+  }
 };
 
 /**
@@ -300,12 +310,19 @@ export const getHero = async () => {
  * =========================
  */
 export const addHero = async (formData: FormData) => {
-  const res = await fetch(HERO_API, {
-    method: "POST",
-    body: formData,
-  });
+  try {
+    const res = await fetch(HERO_API, {
+      method: "POST",
+      body: formData,
+    });
 
-  return res.json();
+    if (!res.ok) throw new Error("Failed to add hero");
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ ADD HERO ERROR:", error);
+    return { success: false };
+  }
 };
 
 /**
@@ -314,12 +331,19 @@ export const addHero = async (formData: FormData) => {
  * =========================
  */
 export const updateHero = async (id: number, formData: FormData) => {
-  const res = await fetch(`${HERO_API}/${id}`, {
-    method: "PUT",
-    body: formData,
-  });
+  try {
+    const res = await fetch(`${HERO_API}/${id}`, {
+      method: "PUT",
+      body: formData,
+    });
 
-  return res.json();
+    if (!res.ok) throw new Error("Failed to update hero");
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ UPDATE HERO ERROR:", error);
+    return { success: false };
+  }
 };
 
 /**
@@ -328,9 +352,16 @@ export const updateHero = async (id: number, formData: FormData) => {
  * =========================
  */
 export const deleteHero = async (id: number) => {
-  const res = await fetch(`${HERO_API}/${id}`, {
-    method: "DELETE",
-  });
+  try {
+    const res = await fetch(`${HERO_API}/${id}`, {
+      method: "DELETE",
+    });
 
-  return res.json();
+    if (!res.ok) throw new Error("Failed to delete hero");
+
+    return await res.json();
+  } catch (error) {
+    console.error("❌ DELETE HERO ERROR:", error);
+    return { success: false };
+  }
 };

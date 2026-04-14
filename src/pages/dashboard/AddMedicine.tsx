@@ -83,7 +83,15 @@ const AddMedicine = () => {
 
   const handleCSVUpload = (e: any) => {
     const file = e.target.files[0];
-    if (!file) return;
+
+    console.log("📂 File input triggered");
+
+    if (!file) {
+      console.log("❌ No file chosen");
+      return;
+    }
+
+    console.log("📁 Selected file:", file.name);
 
     setCsvFile(file);
 
@@ -91,7 +99,13 @@ const AddMedicine = () => {
 
     reader.onload = (event: any) => {
       const text = event.target.result;
+
+      console.log("📄 File content preview:", text.slice(0, 200));
+
       const rows = text.split("\n").map((row: string) => row.split(","));
+
+      console.log("📊 Parsed rows:", rows.length);
+
       setCsvRows(rows);
     };
 
@@ -169,18 +183,29 @@ const AddMedicine = () => {
   };
   const handleCSVSubmit = async () => {
     try {
+      console.log("📤 Upload button clicked");
+
       if (!csvFile) {
+        console.log("❌ No file selected");
         alert("Please select CSV file");
         return;
       }
 
-      await uploadMedicineExcel(csvFile);
+      console.log("📁 File selected:", csvFile);
+
+      const formData = new FormData();
+      formData.append("file", csvFile);
+
+      console.log("📦 FormData ready");
+
+      const res = await uploadMedicineExcel(csvFile); // ✅ correct
+      console.log("✅ API response:", res);
 
       alert("CSV uploaded successfully");
 
       navigate("/medicine-store");
     } catch (error) {
-      console.error(error);
+      console.error("❌ Upload error:", error);
       alert("CSV upload failed");
     }
   };

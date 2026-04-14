@@ -120,11 +120,11 @@ export const uploadMedicineExcel = async (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await API.post(`/upload-excel`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
+  console.log("📡 Sending file:", file);
+
+  const res = await API.post(`/upload-excel`, formData); // ✅ no headers
+
+  console.log("✅ Response:", res.data);
 
   return res.data;
 };

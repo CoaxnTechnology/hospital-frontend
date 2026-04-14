@@ -77,13 +77,17 @@ const EditMedicine = () => {
     composition: "",
     storage: "",
   });
+  const formatInputDate = (date: string) => {
+    if (!date) return "";
+    return new Date(date).toISOString().split("T")[0];
+  };
   useEffect(() => {
     const fetchMedicine = async () => {
       if (!id) return;
 
       try {
         const res = await getMedicineById(Number(id));
-
+        console.log("Fetched medicine data:", res);
         const med = res.data;
 
         setForm({
@@ -102,8 +106,8 @@ const EditMedicine = () => {
           sellingPrice: med.selling_price || 0,
           shelfLocation: med.shelf_location || "",
           batchNumber: med.batch_number || "",
-          manufacturingDate: med.manufacturing_date || "",
-          expiryDate: med.expiry_date || "",
+          manufacturingDate: formatInputDate(med.manufacturing_date),
+          expiryDate: formatInputDate(med.expiry_date),
           barcode: med.barcode || "",
           prescriptionRequired: !!med.prescription_required,
           description: med.description || "",

@@ -9,9 +9,10 @@ const EditBranch = () => {
 
   const [form, setForm] = useState<any>({
     name: "",
-    area: "",   // ✅ NEW FIELD
+    area: "",
     address: "",
     city: "",
+    phone: "", // 🔥 NEW
   });
 
   useEffect(() => {
@@ -23,8 +24,9 @@ const EditBranch = () => {
         setForm({
           name: branch.name || "",
           city: branch.city || "",
-          area: branch.area || "", // ✅ SET AREA
+          area: branch.area || "",
           address: branch.address || "",
+          phone: branch.phone || "", // 🔥 SET PHONE
         });
       }
     };
@@ -45,7 +47,7 @@ const EditBranch = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* 🔥 NAME */}
+          {/* NAME */}
           <input
             value={form.name}
             placeholder="Branch Name"
@@ -53,7 +55,7 @@ const EditBranch = () => {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
 
-          {/* 🔥 CITY */}
+          {/* CITY */}
           <input
             value={form.city}
             placeholder="City"
@@ -61,7 +63,7 @@ const EditBranch = () => {
             onChange={(e) => setForm({ ...form, city: e.target.value })}
           />
 
-          {/* 🔥 AREA (NEW) */}
+          {/* AREA */}
           <input
             value={form.area}
             placeholder="Area"
@@ -69,7 +71,15 @@ const EditBranch = () => {
             onChange={(e) => setForm({ ...form, area: e.target.value })}
           />
 
-          {/* 🔥 ADDRESS */}
+          {/* 🔥 PHONE (NEW) */}
+          <input
+            value={form.phone}
+            placeholder="Mobile Number"
+            className="w-full border p-2 rounded"
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
+
+          {/* ADDRESS */}
           <textarea
             value={form.address}
             placeholder="Full Address"
@@ -77,7 +87,7 @@ const EditBranch = () => {
             onChange={(e) => setForm({ ...form, address: e.target.value })}
           />
 
-          {/* 🔥 BUTTON */}
+          {/* BUTTON */}
           <button className="bg-blue-600 text-white px-4 py-2 rounded">
             Update
           </button>
