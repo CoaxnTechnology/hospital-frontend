@@ -55,7 +55,23 @@ const BranchDetails = () => {
               <h3 className="font-semibold mb-2">📍 Full Address</h3>
               <p className="text-gray-600">{fullAddress}</p>
             </div>
+            {/* 🔥 PHONE */}
+            <div className="bg-gray-50 border rounded-xl p-4">
+              <h3 className="font-semibold mb-2">📞 Contact</h3>
 
+              <p className="text-gray-600 mb-3">
+                {branch.phone || "Not available"}
+              </p>
+
+              {branch.phone && (
+                <a
+                  href={`tel:${branch.phone}`}
+                  className="inline-block bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition"
+                >
+                  📞 Call Now
+                </a>
+              )}
+            </div>
             {/* 🔥 BUTTON */}
             <div>
               <a

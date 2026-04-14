@@ -8,6 +8,10 @@ const ResetPassword = () => {
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false); // 🔥 NEW
+  const [showConfirm, setShowConfirm] = useState(false);   // 🔥 NEW
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -55,7 +59,10 @@ const ResetPassword = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white shadow-xl rounded-xl p-8 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-2 text-center">Reset Password</h2>
+        <h2 className="text-2xl font-bold mb-2 text-center">
+          Reset Password
+        </h2>
+
         <p className="text-gray-500 text-center mb-6">
           Set a new password for your account
         </p>
@@ -73,29 +80,52 @@ const ResetPassword = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            placeholder="New password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-          />
 
-          <input
-            type="password"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
-          />
+          {/* 🔥 PASSWORD */}
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="New password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border rounded-lg px-4 py-2 pr-10 focus:ring-2 focus:ring-blue-500"
+            />
 
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
+            >
+              <i className={`fa ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+            </span>
+          </div>
+
+          {/* 🔥 CONFIRM PASSWORD */}
+          <div className="relative">
+            <input
+              type={showConfirm ? "text" : "password"}
+              placeholder="Confirm password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full border rounded-lg px-4 py-2 pr-10 focus:ring-2 focus:ring-blue-500"
+            />
+
+            <span
+              onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
+            >
+              <i className={`fa ${showConfirm ? "fa-eye-slash" : "fa-eye"}`} />
+            </span>
+          </div>
+
+          {/* 🔥 BUTTON */}
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             {loading ? "Resetting..." : "Reset Password"}
           </button>
+
         </form>
       </div>
     </div>

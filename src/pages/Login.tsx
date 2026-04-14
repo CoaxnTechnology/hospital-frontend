@@ -6,11 +6,12 @@ import { loginUser } from "../services/auth.service";
 const Login = () => {
   const navigate = useNavigate();
 
-  // 🔥 email → username
   const [form, setForm] = useState({
     username: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false); // 🔥 NEW
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,21 +24,19 @@ const Login = () => {
     e.preventDefault();
     setError("");
     setLoading(true);
-    console.log("FORM DATA:", form);
+
     try {
       const res = await loginUser(form);
-      console.log("LOGIN RESPONSE:", res);
+
       if (!res.success) {
         setError(res.message || "Login failed");
         setLoading(false);
         return;
       }
 
-      // 🔐 SAVE TOKEN
       localStorage.setItem("token", res.token);
       localStorage.setItem("user", JSON.stringify(res.user));
 
-      // 🔁 ROLE BASED REDIRECT (same dashboard)
       navigate("/dashboard");
     } catch (err) {
       setError("Server error");
@@ -49,6 +48,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-blue-50 px-4">
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+
         {/* LEFT */}
         <div className="hidden lg:flex flex-col justify-center items-center bg-blue-600 text-white p-12">
           <img src={logo} className="h-14 mb-6" />
@@ -70,37 +70,49 @@ const Login = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
+
             {/* USERNAME */}
             <input
               type="text"
               name="username"
               required
-              placeholder="Username (admin)"
+              placeholder="Username"
               value={form.username}
               onChange={handleChange}
               className="w-full px-4 py-3 border rounded-lg
               focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
 
-            {/* PASSWORD */}
-            <input
-              type="password"
-              name="password"
-              required
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border rounded-lg
-              focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
+            {/* 🔥 PASSWORD WITH SHOW/HIDE */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                required
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border rounded-lg pr-10
+                focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              />
 
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
+              >
+                <i className={`fa ${showPassword ? "fa-eye-slash" : "fa-eye"}`} />
+              </span>
+            </div>
+
+            {/* BUTTON */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+
           </form>
         </div>
       </div>

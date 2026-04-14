@@ -294,6 +294,7 @@ const HERO_API = `${BASE_URL}/api/hero`;
 export const getHero = async () => {
   try {
     const res = await fetch(HERO_API);
+    console.log("🔥 GET HERO STATUS:", res.status);
 
     if (!res.ok) throw new Error("Failed to fetch hero");
 

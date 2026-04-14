@@ -6,8 +6,30 @@ import Appointment from "../components/home/Appointment";
 import Blog from "../components/home/Blog";
 import Footer from "../components/layout/Footer";
 import SpecialitiesSection from "../components/home/SpecialitiesSection";
-
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 const Home = () => {
+  const location = useLocation();
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+
+      setTimeout(() => {
+        const el = document.getElementById(id);
+
+        if (el) {
+          const yOffset = -100; // 🔥 navbar height adjust karo
+          const y =
+            el.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+          window.scrollTo({
+            top: y,
+            behavior: "smooth",
+          });
+        }
+      }, 500); // 🔥 thoda delay
+    }
+  }, [location]);
   return (
     <>
       <Navbar />

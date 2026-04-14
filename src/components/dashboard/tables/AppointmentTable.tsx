@@ -14,7 +14,6 @@ type Props = {
 const AppointmentTable = ({ data }: Props) => {
   const navigate = useNavigate();
 
-  // ✅ DIRECT USE DATA (NO FILTER)
   const appointments: Appointment[] = data.map((item: any) => ({
     patientName: item.patient_name,
     doctorName: item.doctor_name,
@@ -23,64 +22,84 @@ const AppointmentTable = ({ data }: Props) => {
   }));
 
   return (
-    <table className="w-full text-sm">
-      <thead className="sticky top-0 bg-white z-10">
-        <tr className="text-left text-gray-500 border-b">
-          <th className="px-6 py-3">Patient</th>
-          <th className="px-6 py-3">Doctor</th>
-          <th className="px-6 py-3">Time</th>
-          <th className="px-6 py-3">Status</th>
-        </tr>
-      </thead>
+    <>
+      {/* 🔥 HIDE SCROLLBAR */}
+      <style>
+        {`
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
 
-      <tbody>
-        {appointments.length === 0 ? (
-          <tr>
-            <td colSpan={4} className="text-center p-6 text-gray-400">
-              No appointments found
-            </td>
-          </tr>
-        ) : (
-          appointments.map((item, index) => (
-            <tr
-              key={index}
-              onClick={() => navigate("/appointments")}
-              className="cursor-pointer border-b hover:bg-blue-50/40"
-            >
-              <td className="px-6 py-4 font-medium">
-                {item.patientName}
-              </td>
+      {/* 🔥 SCROLL CONTAINER */}
+      <div className="overflow-y-auto max-h-[320px] no-scrollbar">
 
-              <td className="px-6 py-4">
-                {item.doctorName}
-              </td>
-
-              <td className="px-6 py-4">
-                {new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </td>
-
-              <td className="px-6 py-4">
-                <span
-                  className={`px-3 py-1 text-xs rounded-full font-medium
-                  ${
-                    item.status === "Completed"
-                      ? "bg-green-100 text-green-700"
-                      : item.status === "Pending"
-                      ? "bg-yellow-100 text-yellow-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}
-                >
-                  {item.status}
-                </span>
-              </td>
+        <table className="w-full text-sm min-w-[500px]">
+          <thead className="sticky top-0 bg-white z-10">
+            <tr className="text-left text-gray-500 border-b">
+              <th className="px-4 sm:px-6 py-3">Patient</th>
+              <th className="px-4 sm:px-6 py-3">Doctor</th>
+              <th className="px-4 sm:px-6 py-3">Time</th>
+              <th className="px-4 sm:px-6 py-3">Status</th>
             </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+          </thead>
+
+          <tbody>
+            {appointments.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="text-center p-6 text-gray-400">
+                  No appointments found
+                </td>
+              </tr>
+            ) : (
+              appointments.map((item, index) => (
+                <tr
+                  key={index}
+                  onClick={() => navigate("/appointments")}
+                  className="cursor-pointer border-b hover:bg-blue-50/40 transition"
+                >
+                  <td className="px-4 sm:px-6 py-4 font-medium">
+                    {item.patientName}
+                  </td>
+
+                  <td className="px-4 sm:px-6 py-4">
+                    {item.doctorName}
+                  </td>
+
+                  <td className="px-4 sm:px-6 py-4">
+                    {new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </td>
+
+                  <td className="px-4 sm:px-6 py-4">
+                    <span
+                      className={`px-3 py-1 text-xs rounded-full font-medium
+                      ${
+                        item.status === "Completed"
+                          ? "bg-green-100 text-green-700"
+                          : item.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+
+      </div>
+    </>
   );
 };
 

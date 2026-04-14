@@ -1,21 +1,21 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-import { useParams } from "react-router-dom";
+
+import { useParams,useNavigate } from "react-router-dom";
 import Hero from "../home/Hero";
 import { useEffect, useState } from "react";
 import { getDoctorsByDepartment } from "../../services/doctor.service";
-import { getHomeData } from "../../services/department.service"; // 🔥 ADD
+import { getHomeData } from "../../services/department.service";
 
 const SpecialityPage = () => {
   const { slug } = useParams();
-
+const navigate = useNavigate();
   const [doctors, setDoctors] = useState<any[]>([]);
-  const [department, setDepartment] = useState<any>(null); // 🔥 NEW
+  const [department, setDepartment] = useState<any>(null);
 
   const name = slug
     ?.replace(/-/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // 🔥 SCROLL FIX
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -26,25 +26,30 @@ const SpecialityPage = () => {
       if (!name) return;
 
       const res = await getDoctorsByDepartment(name);
+      console.log("🔥 DOCTORS API:", res);
+
       setDoctors(res.data || []);
     };
 
     fetchDoctors();
   }, [name]);
 
-  // 🔥 FETCH DEPARTMENT DESCRIPTION
+  // 🔥 FETCH DEPARTMENT
   useEffect(() => {
     const fetchDept = async () => {
       try {
         const res = await getHomeData();
+        console.log("🔥 HOME DATA:", res);
 
         const dept = res.departments?.find(
           (d: any) => d.department_name === name,
         );
 
+        console.log("🔥 SELECTED DEPARTMENT:", dept);
+
         setDepartment(dept || null);
       } catch (error) {
-        console.error("Error loading department", error);
+        console.error("❌ Error loading department", error);
       }
     };
 
@@ -62,7 +67,7 @@ const SpecialityPage = () => {
             {name}
           </h1>
 
-          {/* 🔥 ABOUT SECTION (DYNAMIC) */}
+          {/* ABOUT */}
           <div className="bg-white p-6 md:p-10 rounded-2xl shadow mb-12 text-center">
             <h2 className="text-2xl font-semibold mb-4">About {name}</h2>
 
@@ -84,32 +89,61 @@ const SpecialityPage = () => {
                 </p>
               )}
 
-              {doctors.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="bg-white rounded-2xl shadow hover:shadow-lg transition p-5 text-center"
-                >
-                  <img
-                    src={
-                      doc.image
-                        ? `${BASE_URL}/uploads/${doc.image}`
-                        : "https://via.placeholder.com/150"
-                    }
-                    alt={doc.first_name}
-                    className="w-24 h-24 mx-auto rounded-full mb-4 object-cover"
-                  />
+              {doctors.map((doc) => {
+                // 🔥 DEBUG LOGS
+                console.log("👉 FULL DOC:", doc);
+                console.log("👉 IMAGE FIELD:", doc.image);
 
-                  <h3 className="font-semibold text-lg">
-                    Dr. {doc.first_name} {doc.last_name}
-                  </h3>
+                const imageUrl = doc.image
+                  ? doc.image.startsWith("http")
+                    ? doc.image
+                    : doc.image.startsWith("/uploads")
+                      ? `${BASE_URL}${doc.image}`
+                      : `${BASE_URL}/uploads/${doc.image}`
+                  : "https://via.placeholder.com/150";
 
-                  <p className="text-gray-500 text-sm mb-4">{doc.department}</p>
+                console.log("👉 FINAL IMAGE URL:", imageUrl);
 
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
-                    Book Appointment
-                  </button>
-                </div>
-              ))}
+                return (
+                  <div
+                    key={doc.id}
+                    className="bg-white rounded-2xl shadow hover:shadow-lg transition p-5 text-center"
+                  >
+                    <img
+                      src={imageUrl}
+                      onError={(e) => {
+                        console.log("❌ IMAGE LOAD FAILED:", imageUrl);
+                        (e.target as HTMLImageElement).src =
+                          "https://via.placeholder.com/150";
+                      }}
+                      alt={doc.first_name}
+                      className="w-24 h-24 mx-auto rounded-full mb-4 object-cover"
+                    />
+
+                    <h3 className="font-semibold text-lg">
+                      {doc.first_name} {doc.last_name}
+                    </h3>
+
+                    <p className="text-gray-500 text-sm mb-4">
+                      {doc.department}
+                    </p>
+                    <button
+                      onClick={() =>
+                        navigate("/#appointment", {
+                          state: {
+                            doctorId: doc.id,
+                            doctorName: `${doc.first_name} ${doc.last_name}`,
+                            department: doc.department,
+                          },
+                        })
+                      }
+                      className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition w-full sm:w-auto"
+                    >
+                      Request Appointment
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

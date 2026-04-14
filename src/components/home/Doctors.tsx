@@ -70,7 +70,7 @@ const Doctors = () => {
               {/* CONTENT */}
               <div className="text-center p-5">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Dr. {doc.first_name} {doc.last_name}
+                  {doc.first_name} {doc.last_name}
                 </h3>
 
                 <p className="text-sm text-blue-600 mt-1">{doc.department}</p>
