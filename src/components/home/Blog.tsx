@@ -82,7 +82,7 @@ const Blog = () => {
               >
                 <div className="w-full bg-gray-100 rounded-t-2xl overflow-hidden flex justify-center">
                   <img
-                    src={`${BASE_URL}/uploads/blogs/${encodeURIComponent(blog.image)}`}
+                    src={`${BASE_URL}${blog.image}`}
                     alt={blog.title}
                     className="max-h-56 w-auto object-contain"
                   />

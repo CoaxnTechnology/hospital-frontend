@@ -41,7 +41,7 @@ const BlogDetailsPage = () => {
       <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px] overflow-hidden">
         {/* 🔥 IMAGE (FIXED PERFECT POSITION) */}
         <img
-          src={`${BASE_URL}/uploads/blogs/${encodeURIComponent(blog.image)}`}
+          src={`${BASE_URL}${blog.image}`}
           alt={blog.title}
           className="w-full h-full object-cover object-center md:object-[55%_40%] brightness-95"
         />
