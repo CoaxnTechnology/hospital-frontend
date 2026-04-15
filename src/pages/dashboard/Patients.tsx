@@ -10,6 +10,7 @@ type Patient = {
   phone: string;
   gender: string;
   dob: string;
+  age: number;
   total_visits: number;
   last_visit: string;
 };
@@ -24,6 +25,7 @@ const Patients = () => {
     const fetchData = async () => {
       try {
         const response = await getPatients();
+        console.log("Fetched patients:", response.data);
 
         setPatients(response.data || []);
       } catch (error) {
@@ -40,7 +42,15 @@ const Patients = () => {
   const filteredPatients = patients.filter((p) =>
     `${p.name} ${p.email} ${p.id}`.toLowerCase().includes(search.toLowerCase()),
   );
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
 
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -97,10 +107,6 @@ const Patients = () => {
 
               <tbody>
                 {filteredPatients.map((p) => {
-                  const age = p.dob
-                    ? new Date().getFullYear() - new Date(p.dob).getFullYear()
-                    : "-";
-
                   return (
                     <tr key={p.id} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-3">
@@ -118,7 +124,7 @@ const Patients = () => {
                       <td className="px-4 py-3">{p.email}</td>
                       <td className="px-4 py-3">{p.phone}</td>
                       <td className="px-4 py-3">{p.gender}</td>
-                      <td className="px-4 py-3">{age}</td>
+                      <td className="px-4 py-3">{p.age ?? "-"}</td>
 
                       <td className="px-4 py-3">
                         <span
@@ -129,7 +135,9 @@ const Patients = () => {
                         </span>
                       </td>
 
-                      <td className="px-4 py-3">{p.last_visit || "-"}</td>
+                      <td className="px-4 py-3">
+                        {p.last_visit ? formatDate(p.last_visit) : "-"}
+                      </td>
 
                       <td className="px-4 py-3 text-right">
                         <a

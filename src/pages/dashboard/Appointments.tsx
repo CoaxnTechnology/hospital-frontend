@@ -22,18 +22,12 @@ const Appointments = () => {
   const [filter, setFilter] = useState("today");
   const [customDate, setCustomDate] = useState("");
 
-  /**
-   * FETCH APPOINTMENTS
-   * LIVE QUEUE
-   */
-
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true); // 🔥 important
       try {
         const data = await getAppointments(filter, customDate);
-
         const rows = Array.isArray(data) ? data : data.data;
-
         setAppointments(rows || []);
       } catch (err) {
         console.error(err);
@@ -43,37 +37,53 @@ const Appointments = () => {
     };
 
     fetchData();
-
     const interval = setInterval(fetchData, 3600000);
-
     return () => clearInterval(interval);
   }, [filter, customDate]);
+
   const filtered = appointments.filter((a) =>
     `${a.patient_name} ${a.doctor_name} ${a.email}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
+        {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-2xl font-semibold text-gray-800">Appointments</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800">
+            Appointments
+          </h2>
 
           <a
             href="/appointment/add_appointment"
             className="inline-flex items-center gap-2
-            bg-blue-600 text-white px-5 py-2.5
+            bg-blue-600 text-white px-4 sm:px-5 py-2
             rounded-lg shadow hover:bg-blue-700 transition"
           >
             <i className="fa fa-plus text-sm"></i>
             Add Appointment
           </a>
         </div>
-        <div className="flex flex-wrap gap-3">
+
+        {/* FILTER */}
+        <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
           <button
-            onClick={() => setFilter("today")}
-            className={`px-4 py-2 rounded-lg ${
+            onClick={() => {
+              setFilter("today");
+              setCustomDate("");
+            }}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm ${
               filter === "today" ? "bg-blue-600 text-white" : "bg-gray-200"
             }`}
           >
@@ -81,120 +91,130 @@ const Appointments = () => {
           </button>
 
           <button
-            onClick={() => setFilter("yesterday")}
-            className={`px-4 py-2 rounded-lg ${
-              filter === "yesterday" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
-          >
-            Yesterday
-          </button>
-
-          <button
-            onClick={() => setFilter("tomorrow")}
-            className={`px-4 py-2 rounded-lg ${
+            onClick={() => {
+              setFilter("tomorrow");
+              setCustomDate("");
+            }}
+            className={`px-3 sm:px-4 py-2 rounded-lg text-sm ${
               filter === "tomorrow" ? "bg-blue-600 text-white" : "bg-gray-200"
             }`}
           >
             Tomorrow
           </button>
 
-          <button
-            onClick={() => setFilter("custom")}
-            className={`px-4 py-2 rounded-lg ${
-              filter === "custom" ? "bg-blue-600 text-white" : "bg-gray-200"
+          <input
+            type="date"
+            value={customDate}
+            onChange={(e) => {
+              const value = e.target.value;
+              setCustomDate(value);
+              if (value) setFilter("custom");
+            }}
+            className={`border px-3 py-2 rounded-lg text-sm ${
+              filter === "custom" ? "ring-2 ring-blue-500" : ""
             }`}
-          >
-            Custom
-          </button>
+          />
 
-          {filter === "custom" && (
-            <input
-              type="date"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              className="border px-3 py-2 rounded-lg"
-            />
+          {customDate && (
+            <button
+              onClick={() => {
+                setCustomDate("");
+                setFilter("today");
+              }}
+              className="px-3 py-2 bg-red-500 text-white rounded-lg text-sm"
+            >
+              Clear
+            </button>
           )}
         </div>
+
+        {/* SEARCH */}
         <div className="bg-white rounded-xl shadow p-4">
           <input
             type="text"
             placeholder="Search by patient, doctor or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-1/3
-            border border-gray-300 rounded-lg
-            px-4 py-2
-            focus:outline-none
-            focus:ring-2 focus:ring-blue-500"
+            className="w-full sm:w-1/3 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div className="bg-white rounded-xl shadow overflow-x-auto">
+        {/* TABLE / LIST */}
+        <div className="bg-white rounded-xl shadow">
+          {/* 🔥 SKELETON */}
           {loading ? (
-            <div className="p-6 text-center text-gray-500">
-              Loading appointments...
+            <div className="p-4 space-y-3 animate-pulse">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-12 bg-gray-200 rounded"></div>
+              ))}
             </div>
           ) : (
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left">Token</th>
-                  <th className="px-4 py-3 text-left">Patient</th>
-                  <th className="px-4 py-3 text-left">Department</th>
-                  <th className="px-4 py-3 text-left">Doctor</th>
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-left">Time</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                </tr>
-              </thead>
+            <>
+              {/* DESKTOP TABLE */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-gray-100 text-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Token</th>
+                      <th className="px-4 py-3 text-left">Patient</th>
+                      <th className="px-4 py-3 text-left">Department</th>
+                      <th className="px-4 py-3 text-left">Doctor</th>
+                      <th className="px-4 py-3 text-left">Date</th>
+                      <th className="px-4 py-3 text-left">Time</th>
+                      <th className="px-4 py-3 text-left">Status</th>
+                    </tr>
+                  </thead>
 
-              <tbody>
+                  <tbody>
+                    {filtered.map((a) => (
+                      <tr key={a.id} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3 font-semibold text-blue-600">
+                          {a.token_number}
+                        </td>
+                        <td className="px-4 py-3">{a.patient_name}</td>
+                        <td className="px-4 py-3">{a.department}</td>
+                        <td className="px-4 py-3">{a.doctor_name}</td>
+                        <td className="px-4 py-3">{formatDate(a.date)}</td>
+                        <td className="px-4 py-3">{a.time}</td>
+                        <td className="px-4 py-3">
+                          <span className="px-3 py-1 text-xs rounded-full bg-gray-100">
+                            {a.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* 🔥 MOBILE CARDS */}
+              <div className="md:hidden p-4 space-y-3">
                 {filtered.map((a) => (
-                  <tr key={a.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3 font-semibold text-blue-600">
-                      {a.token_number}
-                    </td>
-
-                    <td className="px-4 py-3">{a.patient_name}</td>
-
-                    <td className="px-4 py-3">
-                      <span className="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
-                        {a.department}
+                  <div key={a.id} className="border rounded-lg p-3 shadow-sm">
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-blue-600">
+                        #{a.token_number}
                       </span>
-                    </td>
+                      <span className="text-xs">{a.status}</span>
+                    </div>
 
-                    <td className="px-4 py-3">{a.doctor_name}</td>
+                    <p className="font-medium">{a.patient_name}</p>
+                    <p className="text-sm text-gray-500">{a.doctor_name}</p>
 
-                    <td className="px-4 py-3">{a.date}</td>
-
-                    <td className="px-4 py-3">{a.time}</td>
-
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full ${
-                          a.status === "Pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : a.status === "In Consultation"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {a.status}
-                      </span>
-                    </td>
-                  </tr>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span>{formatDate(a.date)}</span>
+                      <span>{a.time}</span>
+                    </div>
+                  </div>
                 ))}
+              </div>
 
-                {filtered.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="text-center py-10 text-gray-500">
-                      No appointments found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+              {filtered.length === 0 && (
+                <div className="text-center py-10 text-gray-500">
+                  No appointments found
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

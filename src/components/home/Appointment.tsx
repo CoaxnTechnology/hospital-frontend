@@ -58,6 +58,12 @@ const Appointment = () => {
       [key]: value,
     }));
   };
+  const getToday = () => {
+    const today = new Date();
+    const offset = today.getTimezoneOffset();
+    const local = new Date(today.getTime() - offset * 60000);
+    return local.toISOString().split("T")[0];
+  };
 
   const handleDoctorChange = (doctorId: string) => {
     handleChange("doctor", doctorId);
@@ -126,6 +132,8 @@ const Appointment = () => {
         body: JSON.stringify({
           patient_name: form.name,
           phone: form.phone,
+          age: Number(form.age), // 🔥 ADD
+          gender: form.gender, // 🔥 ADD
           doctor_id: Number(form.doctor),
           department: form.department,
           date: form.date,
@@ -218,6 +226,7 @@ const Appointment = () => {
               </select>
 
               <input
+                type="number"
                 placeholder="Age"
                 className="input"
                 onChange={(e) => handleChange("age", e.target.value)}
@@ -245,6 +254,7 @@ const Appointment = () => {
               <input
                 type="date"
                 className="input"
+                min={getToday()}
                 onChange={(e) => handleChange("date", e.target.value)}
               />
 

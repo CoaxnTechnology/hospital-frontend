@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import logo from "../../assets/images/logo.png";
 import { getBranches } from "../../services/branch.service";
 import { getHospital } from "../../services/setting.service";
-
+import { Phone } from "lucide-react";
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [specialityOpen, setSpecialityOpen] = useState(false);
@@ -171,9 +171,10 @@ const Navbar = () => {
           <div className="hidden lg:block">
             <a
               href={`tel:${hospital?.phone}`}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow inline-block"
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow inline-flex items-center"
             >
-              📞 HOT LINE - {hospital?.phone || "000000"}
+              <Phone className="text-white w-4 h-4 mr-2" />
+              HOT LINE - {hospital?.phone || "000000"}
             </a>
           </div>
 
