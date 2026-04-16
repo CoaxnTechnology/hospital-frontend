@@ -66,7 +66,7 @@ const PatientQueueTV = () => {
             <div className="text-4xl mt-4">{currentPatient.patient_name}</div>
 
             <div className="text-2xl mt-2 text-gray-300">
-              Dr {currentPatient.doctor_name}
+             {currentPatient.doctor_name}
             </div>
           </>
         ) : (
@@ -115,7 +115,7 @@ const PatientQueueTV = () => {
                   {/* ✅ AGE */}
                   <td className="p-3">{p.age || "-"}</td>
 
-                  <td className="p-3">Dr {p.doctor_name}</td>
+                  <td className="p-3">{p.doctor_name}</td>
 
                   <td className="p-3">{p.status}</td>
                 </tr>
