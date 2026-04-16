@@ -15,7 +15,7 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
 
   const [hospital, setHospital] = useState<any>(null);
   const [loading, setLoading] = useState(true); // 🔥 NEW
-
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
   useEffect(() => {
     const fetchHospital = async () => {
       try {
@@ -51,18 +51,13 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
       >
         {/* 🔥 HEADER */}
         <div className="h-16 flex items-center gap-3 px-4 bg-[#009efb]">
-
           {/* 🔥 SKELETON OR LOGO */}
           {loading ? (
             <div className="w-10 h-10 rounded-full bg-white/30 animate-pulse" />
           ) : (
             <div className="w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-sm p-1">
               <img
-                src={
-                  hospital?.logo
-                    ? `${BASE_URL}${hospital.logo}`
-                    : logo
-                }
+                src={hospital?.logo ? `${BASE_URL}${hospital.logo}` : logo}
                 className="w-full h-full object-contain"
               />
             </div>
@@ -84,12 +79,46 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
         {/* MENU */}
         <nav className="mt-3">
           <ul className="space-y-1">
-            <SidebarLink to="/dashboard" icon="dashboard" label="Dashboard" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/dashboard/doctors" icon="user-md" label="Doctors" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/patients" icon="wheelchair" label="Patients" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/appointments" icon="calendar" label="Appointments" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/consultant" icon="stethoscope" label="Consultant" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/departments" icon="building" label="Departments" sidebarOpen={sidebarOpen} />
+            <SidebarLink
+              to="/dashboard"
+              icon="dashboard"
+              label="Dashboard"
+              sidebarOpen={sidebarOpen}
+            />
+            {(user.role === "admin" || user.role === "doctor") && (
+              <SidebarLink
+                to="/dashboard/doctors"
+                icon="user-md"
+                label="Doctors"
+                sidebarOpen={sidebarOpen}
+              />
+            )}
+            <SidebarLink
+              to="/patients"
+              icon="wheelchair"
+              label="Patients"
+              sidebarOpen={sidebarOpen}
+            />
+            <SidebarLink
+              to="/appointments"
+              icon="calendar"
+              label="Appointments"
+              sidebarOpen={sidebarOpen}
+            />
+            {(user.role === "admin" || user.role === "doctor") && (
+              <SidebarLink
+                to="/consultant"
+                icon="stethoscope"
+                label="Consultant"
+                sidebarOpen={sidebarOpen}
+              />
+            )}
+            <SidebarLink
+              to="/departments"
+              icon="building"
+              label="Departments"
+              sidebarOpen={sidebarOpen}
+            />
 
             {/* EMPLOYEE */}
             <li>
@@ -112,12 +141,18 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
               {employeeOpen && sidebarOpen && (
                 <ul className="ml-10 mt-1 space-y-1 text-sm">
                   <li>
-                    <NavLink to="/employees" className="block px-2 py-1 text-gray-600 hover:text-blue-600">
+                    <NavLink
+                      to="/employees"
+                      className="block px-2 py-1 text-gray-600 hover:text-blue-600"
+                    >
                       Employee List
                     </NavLink>
                   </li>
                   <li>
-                    <NavLink to="/employee/leave" className="block px-2 py-1 text-gray-600 hover:text-blue-600">
+                    <NavLink
+                      to="/employee/leave"
+                      className="block px-2 py-1 text-gray-600 hover:text-blue-600"
+                    >
                       Leaves
                     </NavLink>
                   </li>
@@ -125,9 +160,24 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
               )}
             </li>
 
-            <SidebarLink to="/medicine-store" icon="cube" label="Medicine Store" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/settings" icon="cog" label="Settings" sidebarOpen={sidebarOpen} />
-            <SidebarLink to="/patient-queue" icon="users" label="Patient Queue" sidebarOpen={sidebarOpen} />
+            <SidebarLink
+              to="/medicine-store"
+              icon="cube"
+              label="Medicine Store"
+              sidebarOpen={sidebarOpen}
+            />
+            <SidebarLink
+              to="/settings"
+              icon="cog"
+              label="Settings"
+              sidebarOpen={sidebarOpen}
+            />
+            <SidebarLink
+              to="/patient-queue"
+              icon="users"
+              label="Patient Queue"
+              sidebarOpen={sidebarOpen}
+            />
           </ul>
         </nav>
       </aside>

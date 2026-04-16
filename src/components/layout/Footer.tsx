@@ -1,15 +1,9 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 import { FaFacebookF, FaInstagram } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getHospital } from "../../services/setting.service";
 import logo from "../../assets/images/logo.png";
-
-/* 🔥 SCROLL FUNCTION */
-const handleScroll = (id: string) => {
-  const section = document.getElementById(id);
-  section?.scrollIntoView({ behavior: "smooth" });
-};
 
 /* 🔥 URL FIX FUNCTION */
 const formatUrl = (url: string) => {
@@ -19,6 +13,12 @@ const formatUrl = (url: string) => {
 
 const Footer = () => {
   const [hospital, setHospital] = useState<any>(null);
+  const navigate = useNavigate();
+
+  /* 🔥 FIXED SCROLL (IMPORTANT) */
+  const handleScroll = (id: string) => {
+    navigate(`/#${id}`);
+  };
 
   /* 🔥 LOAD HOSPITAL DATA */
   useEffect(() => {
@@ -54,7 +54,7 @@ const Footer = () => {
             <div className="flex gap-4 mt-4 text-blue-400">
               {hospital?.facebook && (
                 <a
-                  href={formatUrl(hospital.facebook)} // ✅ FIX
+                  href={formatUrl(hospital.facebook)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -64,7 +64,7 @@ const Footer = () => {
 
               {hospital?.instagram && (
                 <a
-                  href={formatUrl(hospital.instagram)} // ✅ FIX
+                  href={formatUrl(hospital.instagram)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -128,12 +128,17 @@ const Footer = () => {
 
             <ul className="space-y-2 text-sm">
               <li>📍 {hospital?.address || "Ahmedabad, Gujarat"}</li>
+
               <li>
                 📞
-                <a href={`tel:${hospital?.phone}`} className="hover:text-white">
+                <a
+                  href={`tel:${hospital?.phone}`}
+                  className="hover:text-white"
+                >
                   {hospital?.phone || "+91 0000000000"}
                 </a>
               </li>
+
               <li>📧 {hospital?.email || "hospital@email.com"}</li>
             </ul>
           </div>

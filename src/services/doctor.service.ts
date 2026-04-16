@@ -81,3 +81,15 @@ export const getDoctorsByDepartment = async (department: string) => {
 
   return res.json();
 };
+/* =========================
+GET PRIVATE DOCTORS (ROLE BASED)
+========================= */
+export const getPrivateDoctors = async () => {
+  const res = await fetch(`${API_URL}/private`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  return res.json();
+};

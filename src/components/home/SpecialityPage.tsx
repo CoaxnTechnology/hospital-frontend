@@ -5,6 +5,7 @@ import Hero from "../home/Hero";
 import { useEffect, useState } from "react";
 import { getDoctorsByDepartment } from "../../services/doctor.service";
 import { getHomeData } from "../../services/department.service";
+import Footer from "../layout/Footer";
 
 const SpecialityPage = () => {
   const { slug } = useParams();
@@ -147,7 +148,9 @@ const navigate = useNavigate();
             </div>
           </div>
         </div>
+        
       </div>
+      <Footer />
     </>
   );
 };

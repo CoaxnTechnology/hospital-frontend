@@ -74,3 +74,30 @@ export const updateEmployee = async (id: number, data: any) => {
 
   return await res.json();
 };
+/* =========================
+   RESEND RESET LINK
+========================= */
+export const resendResetLink = async (email: string) => {
+  const res = await fetch(`${API_URL}/resend-reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ email }),
+  });
+
+  return await res.json();
+};
+/* =========================
+   GET MY PROFILE
+========================= */
+export const getMyProfile = async () => {
+  const res = await fetch(`${API_URL}/me`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  return await res.json();
+};

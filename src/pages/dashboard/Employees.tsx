@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
-import { getEmployees } from "../../services/employee.Service";
-import { deleteEmployee } from "../../services/employee.Service";
+import {
+  getEmployees,
+  deleteEmployee,
+  resendResetLink,
+  getMyProfile,
+} from "../../services/employee.Service";
 import { Link } from "react-router-dom";
+
 type Employee = {
   id: number;
   name: string;
   email: string;
   contact: string;
+  user_id: number;
   join_date: string;
   role: string;
 };
@@ -17,16 +23,28 @@ const Employees = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+
   /* =========================
      FETCH EMPLOYEES
   ========================= */
   useEffect(() => {
     const fetchEmployees = async () => {
       try {
-        const res = await getEmployees();
+        let res;
 
-        if (res.success) {
-          setEmployees(res.data);
+        if (user.role === "admin") {
+          res = await getEmployees(); // 👑 admin → all
+          console.log("ADMIN DATA:", res);
+          if (res.success) {
+            setEmployees(res.data);
+          }
+        } else {
+          res = await getMyProfile(); // 👤 staff → own
+          console.log("MY PROFILE:", res);
+          if (res.success) {
+            setEmployees([res.data]); // 🔥 array me convert
+          }
         }
       } catch (err) {
         console.error("Failed to fetch employees:", err);
@@ -37,6 +55,10 @@ const Employees = () => {
 
     fetchEmployees();
   }, []);
+
+  /* =========================
+     DELETE
+  ========================= */
   const handleDelete = async (id: number) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this employee?",
@@ -49,8 +71,6 @@ const Employees = () => {
 
       if (res.success) {
         alert("Employee deleted successfully");
-
-        // UI update
         setEmployees((prev) => prev.filter((emp) => emp.id !== id));
       } else {
         alert(res.message || "Delete failed");
@@ -62,12 +82,38 @@ const Employees = () => {
   };
 
   /* =========================
-     SEARCH FILTER
+     RESEND
   ========================= */
-  const filteredEmployees = employees.filter((emp) =>
-    `${emp.name} ${emp.id}`.toLowerCase().includes(search.toLowerCase()),
-  );
+  const handleResend = async (email: string) => {
+    const confirmAction = window.confirm("Send reset password link again?");
+    if (!confirmAction) return;
 
+    try {
+      const res = await resendResetLink(email);
+
+      if (res.success) {
+        alert("Reset link sent successfully ✅");
+      } else {
+        alert(res.message || "Failed");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /* =========================
+     FILTER (ROLE BASED)
+  ========================= */
+  const filteredEmployees = employees
+    .filter((emp) =>
+      `${emp.name} ${emp.id}`.toLowerCase().includes(search.toLowerCase()),
+    )
+    .filter((emp) => {
+      if (user.role === "admin") return true;
+
+      // ✅ FIXED
+      return emp.user_id === user.id;
+    });
   if (loading) {
     return (
       <DashboardLayout>
@@ -81,21 +127,24 @@ const Employees = () => {
       <div className="p-6 space-y-6">
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h2 className="text-2xl font-semibold text-gray-800">Employees</h2>
+          <h2 className="text-2xl font-semibold text-gray-800">
+            {user.role === "admin" ? "Employees" : user.name}
+          </h2>
 
-          <a
-            href="/employee/add"
-            className="inline-flex items-center gap-2
-                       bg-blue-600 text-white
-                       px-5 py-2.5 rounded-lg
-                       hover:bg-blue-700 transition shadow"
-          >
-            <i className="fa fa-plus text-sm"></i>
-            Add Employee
-          </a>
+          {user.role === "admin" && (
+            <a
+              href="/employee/add"
+              className="inline-flex items-center gap-2
+              bg-blue-600 text-white px-5 py-2.5 rounded-lg
+              hover:bg-blue-700 transition shadow"
+            >
+              <i className="fa fa-plus text-sm"></i>
+              Add Employee
+            </a>
+          )}
         </div>
 
-        {/* SEARCH FILTER */}
+        {/* SEARCH */}
         <div className="bg-white rounded-xl shadow p-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <input
@@ -103,18 +152,8 @@ const Employees = () => {
               placeholder="Search by Employee Name or ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-1/3
-                         border border-gray-300 rounded-lg
-                         px-4 py-2
-                         focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full sm:w-1/3 border rounded-lg px-4 py-2"
             />
-
-            <button
-              className="bg-green-600 text-white px-6 py-2 rounded-lg
-                         hover:bg-green-700 transition shadow"
-            >
-              Search
-            </button>
           </div>
         </div>
 
@@ -135,52 +174,44 @@ const Employees = () => {
 
             <tbody>
               {filteredEmployees.map((emp) => (
-                <tr
-                  key={emp.id}
-                  className="border-b hover:bg-gray-50 transition"
-                >
-                  <td className="px-4 py-3 font-medium">{emp.id}</td>
+                <tr key={emp.id} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-3">{emp.id}</td>
                   <td className="px-4 py-3">{emp.name}</td>
                   <td className="px-4 py-3">{emp.email}</td>
                   <td className="px-4 py-3">{emp.contact}</td>
                   <td className="px-4 py-3">{emp.join_date}</td>
 
                   <td className="px-4 py-3">
-                    <span
-                      className="px-3 py-1 rounded-full text-xs
-                                 bg-indigo-100 text-indigo-700"
-                    >
+                    <span className="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
                       {emp.role}
                     </span>
                   </td>
 
-                  {/* ACTIONS */}
                   <td className="px-4 py-3 text-right">
-                    <div className="flex justify-end items-center gap-2">
-                      <Link
-                        to={`/employee/edit/${emp.id}`}
-                        className="w-9 h-9 flex items-center justify-center
-             rounded-lg border border-gray-200
-             text-gray-600
-             hover:bg-blue-50 hover:text-blue-600
-             transition"
-                        title="Edit Employee"
-                      >
-                        <i className="fa fa-pencil"></i>
-                      </Link>
+                    {user.role === "admin" && (
+                      <div className="flex justify-end gap-2">
+                        <Link
+                          to={`/employee/edit/${emp.id}`}
+                          className="w-9 h-9 flex items-center justify-center border rounded-lg"
+                        >
+                          <i className="fa fa-pencil"></i>
+                        </Link>
 
-                      <button
-                        onClick={() => handleDelete(emp.id)}
-                        className="w-9 h-9 flex items-center justify-center
-  rounded-lg border border-gray-200
-  text-gray-600
-  hover:bg-red-50 hover:text-red-600
-  transition"
-                        title="Delete Employee"
-                      >
-                        <i className="fa fa-trash"></i>
-                      </button>
-                    </div>
+                        <button
+                          onClick={() => handleDelete(emp.id)}
+                          className="w-9 h-9 flex items-center justify-center border rounded-lg"
+                        >
+                          <i className="fa fa-trash"></i>
+                        </button>
+
+                        <button
+                          onClick={() => handleResend(emp.email)}
+                          className="w-9 h-9 flex items-center justify-center border rounded-lg"
+                        >
+                          <i className="fa fa-refresh"></i>
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

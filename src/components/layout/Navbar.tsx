@@ -12,6 +12,8 @@ const Navbar = () => {
 
   const [branches, setBranches] = useState<any[]>([]);
   const [hospital, setHospital] = useState<any>(null);
+  const [loadingHospital, setLoadingHospital] = useState(true);
+  const [loadingBranches, setLoadingBranches] = useState(true);
 
   const hospitalRef = useRef<any>(null);
   const navigate = useNavigate();
@@ -31,8 +33,10 @@ const Navbar = () => {
       try {
         const data = await getBranches();
         setBranches(data);
+        setLoadingBranches(false);
       } catch (err) {
         console.error("Error loading branches", err);
+        setLoadingBranches(false);
       }
     };
 
@@ -45,8 +49,10 @@ const Navbar = () => {
       try {
         const res = await getHospital();
         setHospital(res.data);
+        setLoadingHospital(false);
       } catch (err) {
         console.error("Error loading hospital", err);
+        setLoadingHospital(false);
       }
     };
 
@@ -80,20 +86,32 @@ const Navbar = () => {
               }, 200);
             }}
           >
-            <div className="h-16 w-16 flex items-center justify-center bg-white border rounded-2xl shadow-md p-1 overflow-hidden">
-              <img
-                src={hospital?.logo ? `${BASE_URL}${hospital.logo}` : logo}
-                alt="logo"
-                className="h-full w-full object-contain"
-              />
-            </div>
+            {loadingHospital ? (
+              <>
+                <div className="h-16 w-16 bg-gray-200 animate-pulse rounded-2xl"></div>
+                <div className="hidden sm:flex flex-col">
+                  <div className="h-6 w-32 bg-gray-200 animate-pulse rounded"></div>
+                  <div className="h-4 w-20 bg-gray-200 animate-pulse rounded mt-1"></div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="h-16 w-16 flex items-center justify-center bg-white border rounded-2xl shadow-md p-1 overflow-hidden">
+                  <img
+                    src={hospital?.logo ? `${BASE_URL}${hospital.logo}` : logo}
+                    alt="logo"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
 
-            <div className="hidden sm:flex flex-col">
-              <span className="text-xl font-bold text-gray-800">
-                {hospital?.name || "Hospital"}
-              </span>
-              <span className="text-xs text-gray-500">Care & Trust</span>
-            </div>
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-xl font-bold text-gray-800">
+                    {hospital?.name || "Hospital"}
+                  </span>
+                  <span className="text-xs text-gray-500">Care & Trust</span>
+                </div>
+              </>
+            )}
           </div>
 
           {/* 🔥 DESKTOP MENU */}
@@ -114,7 +132,14 @@ const Navbar = () => {
                 {hospitalOpen && (
                   <div className="absolute left-0 top-full mt-4 w-[650px] bg-white shadow-2xl rounded-2xl border z-50 p-6">
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-blue-600 font-medium">
-                      {branches.length === 0 ? (
+                      {loadingBranches ? (
+                        Array.from({ length: 6 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="h-4 bg-gray-200 animate-pulse rounded w-24"
+                          ></div>
+                        ))
+                      ) : branches.length === 0 ? (
                         <div className="text-gray-400">No branches found</div>
                       ) : (
                         branches.map((b) => (
@@ -150,6 +175,12 @@ const Navbar = () => {
               >
                 Services
               </li>
+              <li
+                onClick={() => handleScroll("blog")}
+                className="cursor-pointer hover:text-blue-600 transition"
+              >
+                Blog
+              </li>
 
               {/* 🔥 CONTACT */}
               <li>
@@ -169,13 +200,17 @@ const Navbar = () => {
 
           {/* 🔥 HOTLINE (CLICKABLE) */}
           <div className="hidden lg:block">
-            <a
-              href={`tel:${hospital?.phone}`}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow inline-flex items-center"
-            >
-              <Phone className="text-white w-4 h-4 mr-2" />
-              HOT LINE - {hospital?.phone || "000000"}
-            </a>
+            {loadingHospital ? (
+              <div className="bg-gray-200 animate-pulse px-4 py-2 rounded-lg h-10 w-40"></div>
+            ) : (
+              <a
+                href={`tel:${hospital?.phone}`}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow inline-flex items-center"
+              >
+                <Phone className="text-white w-4 h-4 mr-2" />
+                HOT LINE - {hospital?.phone || "000000"}
+              </a>
+            )}
           </div>
 
           {/* 🔥 MOBILE BUTTON */}
