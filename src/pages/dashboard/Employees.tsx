@@ -34,16 +34,14 @@ const Employees = () => {
         let res;
 
         if (user.role === "admin") {
-          res = await getEmployees(); // 👑 admin → all
-          console.log("ADMIN DATA:", res);
+          res = await getEmployees();
           if (res.success) {
             setEmployees(res.data);
           }
         } else {
-          res = await getMyProfile(); // 👤 staff → own
-          console.log("MY PROFILE:", res);
+          res = await getMyProfile();
           if (res.success) {
-            setEmployees([res.data]); // 🔥 array me convert
+            setEmployees([res.data]);
           }
         }
       } catch (err) {
@@ -102,18 +100,12 @@ const Employees = () => {
   };
 
   /* =========================
-     FILTER (ROLE BASED)
+     FILTER
   ========================= */
-  const filteredEmployees = employees
-    .filter((emp) =>
-      `${emp.name} ${emp.id}`.toLowerCase().includes(search.toLowerCase()),
-    )
-    .filter((emp) => {
-      if (user.role === "admin") return true;
+  const filteredEmployees = employees.filter((emp) =>
+    `${emp.name} ${emp.id}`.toLowerCase().includes(search.toLowerCase()),
+  );
 
-      // ✅ FIXED
-      return emp.user_id === user.id;
-    });
   if (loading) {
     return (
       <DashboardLayout>
@@ -121,6 +113,17 @@ const Employees = () => {
       </DashboardLayout>
     );
   }
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "-";
+
+    const date = new Date(dateStr);
+
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -144,9 +147,9 @@ const Employees = () => {
           )}
         </div>
 
-        {/* SEARCH */}
-        <div className="bg-white rounded-xl shadow p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        {/* SEARCH (Admin only) */}
+        {user.role === "admin" && (
+          <div className="bg-white rounded-xl shadow p-4">
             <input
               type="text"
               placeholder="Search by Employee Name or ID..."
@@ -155,40 +158,40 @@ const Employees = () => {
               className="w-full sm:w-1/3 border rounded-lg px-4 py-2"
             />
           </div>
-        </div>
+        )}
 
-        {/* TABLE */}
-        <div className="bg-white rounded-xl shadow overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="px-4 py-3 text-left">ID</th>
-                <th className="px-4 py-3 text-left">Employee Name</th>
-                <th className="px-4 py-3 text-left">Email</th>
-                <th className="px-4 py-3 text-left">Contact</th>
-                <th className="px-4 py-3 text-left">Join Date</th>
-                <th className="px-4 py-3 text-left">Role</th>
-                <th className="px-4 py-3 text-right">Action</th>
-              </tr>
-            </thead>
+        {/* ================= ADMIN TABLE ================= */}
+        {user.role === "admin" && (
+          <div className="bg-white rounded-xl shadow overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-gray-100 text-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left">ID</th>
+                  <th className="px-4 py-3 text-left">Employee Name</th>
+                  <th className="px-4 py-3 text-left">Email</th>
+                  <th className="px-4 py-3 text-left">Contact</th>
+                  <th className="px-4 py-3 text-left">Join Date</th>
+                  <th className="px-4 py-3 text-left">Role</th>
+                  <th className="px-4 py-3 text-right">Action</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {filteredEmployees.map((emp) => (
-                <tr key={emp.id} className="border-b hover:bg-gray-50">
-                  <td className="px-4 py-3">{emp.id}</td>
-                  <td className="px-4 py-3">{emp.name}</td>
-                  <td className="px-4 py-3">{emp.email}</td>
-                  <td className="px-4 py-3">{emp.contact}</td>
-                  <td className="px-4 py-3">{emp.join_date}</td>
+              <tbody>
+                {filteredEmployees.map((emp) => (
+                  <tr key={emp.id} className="border-b hover:bg-gray-50">
+                    <td className="px-4 py-3">{emp.id}</td>
+                    <td className="px-4 py-3">{emp.name}</td>
+                    <td className="px-4 py-3">{emp.email}</td>
+                    <td className="px-4 py-3">{emp.contact}</td>
+                    <td className="px-4 py-3">{formatDate(emp.join_date)}</td>
 
-                  <td className="px-4 py-3">
-                    <span className="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
-                      {emp.role}
-                    </span>
-                  </td>
+                    <td className="px-4 py-3">
+                      <span className="px-3 py-1 rounded-full text-xs bg-indigo-100 text-indigo-700">
+                        {emp.role}
+                      </span>
+                    </td>
 
-                  <td className="px-4 py-3 text-right">
-                    {user.role === "admin" && (
+                    <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-2">
                         <Link
                           to={`/employee/edit/${emp.id}`}
@@ -211,21 +214,61 @@ const Employees = () => {
                           <i className="fa fa-refresh"></i>
                         </button>
                       </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))}
 
-              {filteredEmployees.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="text-center py-10 text-gray-500">
-                    No employees found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                {filteredEmployees.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-gray-500">
+                      No employees found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ================= STAFF / DOCTOR CARD ================= */}
+        {user.role !== "admin" &&
+          employees.map((emp) => (
+            <div
+              key={emp.id}
+              className="bg-white rounded-2xl shadow-lg p-6 max-w-xl mx-auto"
+            >
+              <div className="text-center mb-6">
+                <div className="w-24 h-24 mx-auto rounded-full bg-blue-100 flex items-center justify-center text-3xl font-bold text-blue-600">
+                  {emp.name?.charAt(0)}
+                </div>
+
+                <h2 className="text-2xl font-semibold mt-3">{emp.name}</h2>
+                <p className="text-gray-500">{emp.role}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500">Email</p>
+                  <p className="font-medium">{emp.email}</p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500">Contact</p>
+                  <p className="font-medium">{emp.contact}</p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500">Join Date</p>
+                  <p className="font-medium">{formatDate(emp.join_date)}</p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-500">Employee ID</p>
+                  <p className="font-medium">#{emp.id}</p>
+                </div>
+              </div>
+            </div>
+          ))}
       </div>
     </DashboardLayout>
   );

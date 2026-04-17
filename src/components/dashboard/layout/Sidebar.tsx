@@ -140,14 +140,19 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
 
               {employeeOpen && sidebarOpen && (
                 <ul className="ml-10 mt-1 space-y-1 text-sm">
-                  <li>
-                    <NavLink
-                      to="/employees"
-                      className="block px-2 py-1 text-gray-600 hover:text-blue-600"
-                    >
-                      Employee List
-                    </NavLink>
-                  </li>
+                  {/* ✅ Employee List → only admin + staff */}
+                  {(user.role === "admin" || user.role === "staff") && (
+                    <li>
+                      <NavLink
+                        to="/employees"
+                        className="block px-2 py-1 text-gray-600 hover:text-blue-600"
+                      >
+                        Employee List
+                      </NavLink>
+                    </li>
+                  )}
+
+                  {/* ✅ Leaves → sabko */}
                   <li>
                     <NavLink
                       to="/employee/leave"

@@ -17,7 +17,7 @@ export const getMyLeaves = async () => {
 };
 
 /* ========================
-GET ALL LEAVES (ADMIN / DOCTOR)
+GET ALL LEAVES (ADMIN)
 ======================== */
 export const getAllLeaves = async () => {
   const res = await fetch(API_URL, {
@@ -56,6 +56,33 @@ export const updateLeaveStatus = async (id: number, data: any) => {
       Authorization: `Bearer ${getToken()}`
     },
     body: JSON.stringify(data)
+  });
+
+  return await res.json();
+};
+
+/* ========================
+🔔 GET NOTIFICATION COUNT (ADMIN)
+======================== */
+export const getLeaveNotificationCount = async () => {
+  const res = await fetch(`${API_URL}/notification-count`, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
+  });
+
+  return await res.json();
+};
+
+/* ========================
+👁️ MARK LEAVES AS SEEN (ADMIN)
+======================== */
+export const markLeavesAsSeen = async () => {
+  const res = await fetch(`${API_URL}/mark-seen`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${getToken()}`
+    }
   });
 
   return await res.json();

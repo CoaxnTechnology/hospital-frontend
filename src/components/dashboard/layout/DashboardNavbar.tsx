@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getLeaveNotificationCount } from "../../../services/leave.service";
 
 type Props = {
   sidebarOpen: boolean;
@@ -9,21 +10,43 @@ type Props = {
 const DashboardNavbar = ({ sidebarOpen, toggleSidebar }: Props) => {
   const [showProfile, setShowProfile] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [count, setCount] = useState(0);
+
   const navigate = useNavigate();
 
-  /* 🔥 GET USER FROM LOCALSTORAGE */
+  /* 🔥 GET USER */
   useEffect(() => {
     const user = localStorage.getItem("user");
 
-    console.log("LOCALSTORAGE USER RAW:", user);
-
     if (user) {
       const parsedUser = JSON.parse(user);
-      console.log("PARSED USER:", parsedUser);
-
       setUserData(parsedUser);
     }
   }, []);
+
+  /* 🔔 FETCH NOTIFICATION COUNT */
+  useEffect(() => {
+    if (userData?.role === "admin") {
+      fetchCount();
+
+      // 🔁 auto refresh every 5 sec
+      const interval = setInterval(fetchCount, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [userData]);
+
+  const fetchCount = async () => {
+    try {
+      const res = await getLeaveNotificationCount();
+      console.log("Notification Count:", res);
+      if (res.success) {
+        setCount(res.count);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -49,13 +72,21 @@ const DashboardNavbar = ({ sidebarOpen, toggleSidebar }: Props) => {
 
         {/* RIGHT */}
         <div className="flex items-center gap-6 text-white">
-          {/* 🔔 ONLY ONE NOTIFICATION */}
-          <div className="relative">
-            <i className="fa fa-bell-o text-lg"></i>
-            <span className="absolute -top-1 -right-2 bg-red-600 text-xs px-1 rounded-full">
-              3
-            </span>
-          </div>
+          {/* 🔔 NOTIFICATION (ADMIN ONLY) */}
+          {userData?.role === "admin" && (
+            <div
+              className="relative cursor-pointer"
+              onClick={() => navigate("/employee/leave")}
+            >
+              <i className="fa fa-bell text-lg"></i>
+
+              {count > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-600 text-xs px-1 rounded-full">
+                  {count}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* 👤 USER PROFILE */}
           <div className="relative">

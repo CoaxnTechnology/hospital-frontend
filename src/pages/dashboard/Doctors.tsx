@@ -12,6 +12,7 @@ type Doctor = {
   dob: string;
   gender: string;
   address: string;
+   user_id: number;
   phone: string;
   department: string;
 };
