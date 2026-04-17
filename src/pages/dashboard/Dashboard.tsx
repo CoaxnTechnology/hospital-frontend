@@ -99,10 +99,14 @@ const Dashboard = () => {
     handleFilterChange("today");
   }, []);
 
-  // 🔥 AUTO FETCH
+  // 🔥 AUTO FETCH ONLY FOR TODAY'S DATA
   useEffect(() => {
     if (startDate && endDate) {
-      fetchDashboard();
+      const today = new Date();
+      const todayStr = formatLocalDate(today);
+      if (startDate === todayStr && endDate === todayStr) {
+        fetchDashboard();
+      }
     }
   }, [startDate, endDate]);
 
@@ -115,17 +119,6 @@ const Dashboard = () => {
 
           <div className="bg-white px-4 py-3 rounded-xl shadow flex flex-wrap items-center gap-3 border">
             {/* SELECT */}
-            <select
-              value={filterType}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              className="border px-3 py-2 rounded-lg text-sm"
-            >
-              <option value="today">Today</option>
-              <option value="tomorrow">Tomorrow</option>
-              <option value="thisMonth">This Month</option>
-              <option value="6months">Last 6 Months</option>
-              <option value="custom">Custom</option>
-            </select>
 
             {/* START DATE */}
             <input

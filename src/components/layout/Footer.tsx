@@ -101,7 +101,7 @@ const Footer = () => {
               </li>
 
               <li
-                onClick={() => handleScroll("appointment")}
+                onClick={() => handleScroll("home")}
                 className="cursor-pointer hover:text-white"
               >
                 Appointment
@@ -131,10 +131,7 @@ const Footer = () => {
 
               <li>
                 📞
-                <a
-                  href={`tel:${hospital?.phone}`}
-                  className="hover:text-white"
-                >
+                <a href={`tel:${hospital?.phone}`} className="hover:text-white">
                   {hospital?.phone || "+91 0000000000"}
                 </a>
               </li>

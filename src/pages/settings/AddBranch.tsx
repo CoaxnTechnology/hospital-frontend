@@ -16,6 +16,19 @@ const AddBranch = () => {
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+
+    // ✅ FRONTEND VALIDATION: Check all required fields
+    if (
+      !form.name.trim() ||
+      !form.area.trim() ||
+      !form.address.trim() ||
+      !form.city.trim() ||
+      !form.phone.trim()
+    ) {
+      alert("⚠️ Please fill all required fields");
+      return;
+    }
+
     await createBranch(form);
     navigate("/settings/branch");
   };
@@ -30,6 +43,7 @@ const AddBranch = () => {
           <input
             placeholder="Branch Name"
             className="w-full border p-2 rounded"
+            required
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
 
@@ -37,6 +51,7 @@ const AddBranch = () => {
           <input
             placeholder="City (e.g. Ahmedabad)"
             className="w-full border p-2 rounded"
+            required
             onChange={(e) => setForm({ ...form, city: e.target.value })}
           />
 
@@ -44,6 +59,7 @@ const AddBranch = () => {
           <input
             placeholder="Area (e.g. Gurukul)"
             className="w-full border p-2 rounded"
+            required
             onChange={(e) => setForm({ ...form, area: e.target.value })}
           />
 
@@ -51,12 +67,14 @@ const AddBranch = () => {
           <textarea
             placeholder="Full Address (for Google Map)"
             className="w-full border p-2 rounded"
+            required
             onChange={(e) => setForm({ ...form, address: e.target.value })}
           />
           {/* 🔥 PHONE */}
           <input
             placeholder="Mobile Number"
             className="w-full border p-2 rounded"
+            required
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
 

@@ -2,7 +2,15 @@ import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getHero } from "../../services/setting.service";
 
-const Hero = ({ showButton = true }: { showButton?: boolean }) => {
+type HeroProps = {
+  showButton?: boolean;
+  onAppointmentClick?: () => void;
+};
+
+const Hero = ({
+  showButton = true,
+  onAppointmentClick,
+}: HeroProps) => {
   const [slides, setSlides] = useState<any[]>([]);
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -48,12 +56,6 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
     return () => clearInterval(interval);
   }, [slides]);
 
-  // 🔥 SCROLL TO APPOINTMENT
-  const scrollToAppointment = () => {
-    const el = document.getElementById("appointment");
-    if (el) el.scrollIntoView({ behavior: "smooth" });
-  };
-
   // 🔥 TOUCH EVENTS
   const handleTouchStart = (e: any) => {
     touchStartX.current = e.targetTouches[0].clientX;
@@ -75,32 +77,10 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
     }
   };
 
-  // 🔥 SKELETON LOADING UI
+  // 🔥 LOADING UI
   if (loading) {
     return (
-      <section className="w-full h-[75vh] md:h-[85vh] bg-gray-200 animate-pulse relative overflow-hidden">
-        {/* BACKGROUND */}
-        <div className="absolute inset-0 bg-gray-300"></div>
-
-        {/* CONTENT */}
-        <div className="absolute inset-0 flex items-center">
-          <div className="max-w-7xl mx-auto px-6 w-full">
-            <div className="max-w-xl space-y-4">
-
-              <div className="h-4 w-40 bg-gray-400 rounded"></div>
-
-              <div className="h-10 w-72 bg-gray-400 rounded"></div>
-              <div className="h-10 w-60 bg-gray-400 rounded"></div>
-
-              <div className="h-4 w-full bg-gray-400 rounded"></div>
-              <div className="h-4 w-5/6 bg-gray-400 rounded"></div>
-
-              <div className="h-10 w-40 bg-gray-400 rounded-full mt-4"></div>
-
-            </div>
-          </div>
-        </div>
-      </section>
+      <section className="w-full h-[75vh] md:h-[85vh] bg-gray-200 animate-pulse" />
     );
   }
 
@@ -121,23 +101,15 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
               index === current ? "opacity-100 z-10" : "opacity-0 z-0"
             }`}
           >
-            {/* BLUR BACKGROUND */}
+            {/* BACKGROUND */}
             <img
               src={imgUrl}
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://via.placeholder.com/1200x600?text=Image+Error";
-              }}
               className="absolute inset-0 w-full h-full object-cover blur-md scale-110"
             />
 
             {/* MAIN IMAGE */}
             <img
               src={imgUrl}
-              onError={(e) => {
-                e.currentTarget.src =
-                  "https://via.placeholder.com/1200x600?text=Image+Error";
-              }}
               className="relative w-full h-full object-contain"
             />
 
@@ -163,14 +135,18 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
 
                   <p className="mb-6">{slide.description}</p>
 
+                  {/* 🔥 BUTTON */}
                   {showButton && (
                     <button
-                      onClick={scrollToAppointment}
+                      onClick={() =>
+                        onAppointmentClick && onAppointmentClick()
+                      }
                       className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-full shadow-lg"
                     >
                       Make an Appointment
                     </button>
                   )}
+
                 </div>
               </div>
             </div>
@@ -187,7 +163,7 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
                 prev === 0 ? slides.length - 1 : prev - 1
               )
             }
-            className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-white p-3 rounded-full shadow"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 bg-white/80 p-3 rounded-full"
           >
             <ChevronLeft />
           </button>
@@ -196,7 +172,7 @@ const Hero = ({ showButton = true }: { showButton?: boolean }) => {
             onClick={() =>
               setCurrent((prev) => (prev + 1) % slides.length)
             }
-            className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-30 bg-white/80 hover:bg-white p-3 rounded-full shadow"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/80 p-3 rounded-full"
           >
             <ChevronRight />
           </button>
