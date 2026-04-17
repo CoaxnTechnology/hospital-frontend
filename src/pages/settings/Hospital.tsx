@@ -46,6 +46,23 @@ const Hospital = () => {
 
   const handleFile = (e: any) => {
     const file = e.target.files[0];
+
+    if (!file) return;
+
+    // 🔥 TYPE CHECK
+    if (!file.type.startsWith("image/")) {
+      alert("❌ Please upload a valid image file");
+      return;
+    }
+
+    // 🔥 SIZE CHECK (1MB)
+    const maxSize = 1 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      alert("❌ Image size should be less than 1MB");
+      return;
+    }
+
     setLogo(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -203,11 +220,15 @@ const Hospital = () => {
                 </div>
               )}
 
-              <input type="file" onChange={handleFile} className="text-sm" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFile}
+                className="text-sm"
+              />
             </div>
-
-            <p className="text-xs text-gray-400 text-center">
-              Recommended size: 200x200px
+            <p className="text-xs text-gray-500 text-center">
+              Max size: 1MB • Recommended: 200x200px • Format: JPG, PNG
             </p>
           </div>
         </div>

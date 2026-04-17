@@ -22,6 +22,7 @@ const AddDoctor = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);
   // Avatar preview state
@@ -42,7 +43,20 @@ const AddDoctor = () => {
     setLoading(true);
 
     try {
-      const res = await createDoctor(form);
+      // 🔥 FORM DATA BANANA
+      const formData = new FormData();
+
+      Object.entries(form).forEach(([key, value]) => {
+        formData.append(key, value as string);
+      });
+
+      // 🔥 IMAGE ADD KARO
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      // 🔥 API CALL
+      const res = await createDoctor(formData);
 
       if (!res.success) {
         setError(res.message || "Doctor creation failed");
@@ -273,11 +287,29 @@ const AddDoctor = () => {
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    setPreview(URL.createObjectURL(file));
+                  if (!file) return;
+
+                  // 🔥 TYPE CHECK
+                  if (!file.type.startsWith("image/")) {
+                    alert("❌ Only image files allowed");
+                    return;
                   }
+
+                  // 🔥 SIZE CHECK (500KB)
+                  const maxSize = 500 * 1024;
+
+                  if (file.size > maxSize) {
+                    alert("❌ Image must be less than 500KB");
+                    return;
+                  }
+
+                  setImageFile(file);
+                  setPreview(URL.createObjectURL(file));
                 }}
               />
+              <p className="text-xs text-gray-500 mt-2">
+                Max size: 500KB • Recommended: 300x300px • Format: JPG, PNG
+              </p>
             </div>
 
             {/* BIO */}

@@ -11,7 +11,6 @@ const Signature = () => {
   const [signatureUrl, setSignatureUrl] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
-  
 
   useEffect(() => {
     fetchSignature();
@@ -73,12 +72,11 @@ const Signature = () => {
       setLoading(true);
 
       const canvas = canvasRef.current;
-      const dataUrl = canvas.toDataURL("image/png");
-
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
       const blob = await (await fetch(dataUrl)).blob();
 
       const fd = new FormData();
-      fd.append("signature", blob, "signature.png");
+      fd.append("signature", blob, "signature.jpg");
 
       const res = await uploadSignature(fd);
 
@@ -177,12 +175,33 @@ const Signature = () => {
             <div className="border-2 border-dashed rounded-lg p-6 text-center">
               <input
                 type="file"
-                onChange={(e: any) => setFile(e.target.files[0])}
+                accept="image/png, image/jpeg"
+                onChange={(e: any) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  // 🔥 TYPE CHECK
+                  if (!file.type.startsWith("image/")) {
+                    alert("❌ Only image files allowed");
+                    return;
+                  }
+
+                  // 🔥 SIZE CHECK (200KB recommended for signature)
+                  const maxSize = 200 * 1024;
+
+                  if (file.size > maxSize) {
+                    alert("❌ Signature must be less than 200KB");
+                    return;
+                  }
+
+                  setFile(file);
+                }}
                 className="mb-3"
               />
 
               <p className="text-xs text-gray-400">
-                PNG / JPG format recommended
+                Max size: 200KB • Recommended: Transparent PNG • Format: PNG,
+                JPG
               </p>
             </div>
 

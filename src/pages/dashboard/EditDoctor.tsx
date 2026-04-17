@@ -351,13 +351,31 @@ const EditDoctor = () => {
                 hidden
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) {
-                    setPreview(URL.createObjectURL(file));
-                    setImageFile(file);
+                  if (!file) return;
+
+                  // 🔥 TYPE CHECK
+                  if (!file.type.startsWith("image/")) {
+                    alert("❌ Only image files allowed");
+                    return;
                   }
+
+                  // 🔥 SIZE CHECK (500KB)
+                  const maxSize = 500 * 1024;
+
+                  if (file.size > maxSize) {
+                    alert("❌ Image must be less than 500KB");
+                    return;
+                  }
+
+                  setPreview(URL.createObjectURL(file));
+                  setImageFile(file);
                 }}
               />
+              <p className="text-xs text-gray-500 mt-2">
+              Max size: 500KB • Recommended: 300x300px • Format: JPG, PNG
+            </p>
             </div>
+            
 
             {/* BIO */}
             <div className="md:col-span-2">

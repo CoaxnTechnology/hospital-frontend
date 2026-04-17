@@ -43,11 +43,25 @@ const HeroSettings = () => {
   // FILE
   const handleFile = (e: any) => {
     const file = e.target.files[0];
-    setForm({ ...form, image: file });
 
-    if (file) {
-      setPreview(URL.createObjectURL(file));
+    if (!file) return;
+
+    // 🔥 TYPE CHECK
+    if (!file.type.startsWith("image/")) {
+      alert("❌ Please upload a valid image file");
+      return;
     }
+
+    // 🔥 SIZE CHECK (1MB)
+    const maxSize = 1 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+      alert("❌ Image size should be less than 1MB");
+      return;
+    }
+
+    setForm({ ...form, image: file });
+    setPreview(URL.createObjectURL(file));
   };
 
   // 🔥 SUBMIT FIXED
@@ -125,7 +139,6 @@ const HeroSettings = () => {
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-
         {/* HEADER */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 rounded-2xl text-white shadow">
           <h2 className="text-2xl font-semibold">Hero Section Manager</h2>
@@ -169,17 +182,17 @@ const HeroSettings = () => {
             <input
               type="file"
               name="image"
+              accept="image/*"
               onChange={handleFile}
               className="hidden"
             />
           </label>
-
+          <p className="text-xs text-gray-500 mt-2 text-center">
+            Max size: 1MB • Recommended: 1200x600px • Format: JPG, PNG
+          </p>
           {/* PREVIEW */}
           {preview && (
-            <img
-              src={preview}
-              className="w-32 h-24 object-cover rounded-xl"
-            />
+            <img src={preview} className="w-32 h-24 object-cover rounded-xl" />
           )}
 
           {/* BUTTON */}
@@ -189,11 +202,7 @@ const HeroSettings = () => {
               disabled={loading}
               className="bg-blue-600 text-white px-6 py-2 rounded-xl disabled:opacity-50"
             >
-              {loading
-                ? "Saving..."
-                : editingId
-                ? "Update Slide"
-                : "Add Slide"}
+              {loading ? "Saving..." : editingId ? "Update Slide" : "Add Slide"}
             </button>
 
             {editingId && (
@@ -258,7 +267,6 @@ const HeroSettings = () => {
             ))}
           </div>
         )}
-
       </div>
     </DashboardLayout>
   );
