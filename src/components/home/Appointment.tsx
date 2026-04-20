@@ -6,6 +6,7 @@ import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase";
 declare global {
   interface Window {
     confirmationResult: any;
+    grecaptcha: any;
   }
 }
 const Appointment = () => {
@@ -39,17 +40,15 @@ const Appointment = () => {
     loadDoctors();
   }, []);
   const setupRecaptcha = () => {
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        {
+          size: "invisible",
+        },
+      );
     }
-
-    recaptchaVerifierRef.current = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible", // better for production
-      },
-    );
   };
 
   const resetOTPFlow = () => {
@@ -63,12 +62,6 @@ const Appointment = () => {
     setOtpMessage("");
     console.log("resetOTPFlow: otpMessage cleared");
 
-    if (recaptchaVerifierRef.current) {
-      console.log("resetOTPFlow: clearing recaptcha");
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-      console.log("resetOTPFlow: recaptcha cleared");
-    }
     console.log("resetOTPFlow: end");
   };
   useEffect(() => {
@@ -209,7 +202,7 @@ const Appointment = () => {
         setBookingLoading(false);
         console.log("sendOtp: bookingLoading set false");
       }
-    }, 500); // 🔥 VERY IMPORTANT
+    }, 700); // 🔥 VERY IMPORTANT
   };
   const verifyAndBook = async () => {
     console.log("verifyAndBook: start", { otp, form });
@@ -279,6 +272,34 @@ const Appointment = () => {
     } finally {
       setBookingLoading(false);
       console.log("verifyAndBook: bookingLoading set false");
+    }
+  };
+  const resendOtp = async () => {
+    try {
+      setBookingLoading(true);
+
+      await auth.signOut();
+
+      // 🔥 IMPORTANT: reset verifier manually
+      if (recaptchaVerifierRef.current) {
+        const widgetId = await recaptchaVerifierRef.current.render();
+        window.grecaptcha.reset(widgetId);
+      }
+
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        "+91" + form.phone,
+        recaptchaVerifierRef.current!,
+      );
+
+      window.confirmationResult = confirmation;
+
+      setOtpMessage(`OTP resent to +91 ${form.phone}`);
+    } catch (err: any) {
+      console.error("RESEND ERROR:", err);
+      alert("Failed to resend OTP");
+    } finally {
+      setBookingLoading(false);
     }
   };
   const now = new Date();
@@ -460,8 +481,8 @@ const Appointment = () => {
 
                 <button
                   onClick={() => {
-                    resetOTPFlow();
-                    sendOtp();
+                    setOtp("");
+                    resendOtp();
                   }}
                   className="text-blue-600 text-sm"
                 >
