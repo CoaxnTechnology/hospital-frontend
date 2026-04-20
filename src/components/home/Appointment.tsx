@@ -44,6 +44,7 @@ const Appointment = () => {
         recaptchaVerifierRef.current.clear();
         recaptchaVerifierRef.current = null;
       }
+      // Clean up the DOM element on unmount
     };
   }, []);
 
@@ -80,11 +81,8 @@ const Appointment = () => {
       setIsVerified(false);
       setOtp("");
       setOtpMessage("");
-      // Clear existing recaptcha when phone changes
-      if (recaptchaVerifierRef.current) {
-        recaptchaVerifierRef.current.clear();
-        recaptchaVerifierRef.current = null;
-      }
+
+      // Also clear the DOM element
     }
 
     setForm((prev) => ({
@@ -140,55 +138,80 @@ const Appointment = () => {
     }
 
     if (!otpSent) {
+      console.log("Starting OTP send process");
       setBookingLoading(true);
+      console.log("Setting booking loading to true");
       try {
+        console.log("In try block for OTP send");
         console.log("📲 Sending OTP to", "+91" + form.phone);
-
-        if (!recaptchaVerifierRef.current) {
-          recaptchaVerifierRef.current = new RecaptchaVerifier(
-            auth,
-            "recaptcha-container",
-            {
-              size: "invisible",
-            },
-          );
+        console.log("Checking if recaptcha exists");
+        // Create a fresh RecaptchaVerifier instance
+        if (recaptchaVerifierRef.current) {
+          console.log("Clearing existing recaptcha");
+          recaptchaVerifierRef.current.clear();
         }
-
+        console.log("Signing out auth");
+        await auth.signOut(); // 🔥 important
+        console.log("Creating new RecaptchaVerifier");
+        recaptchaVerifierRef.current = new RecaptchaVerifier(
+          auth,
+          "recaptcha-container",
+          { size: "invisible" },
+        );
+        console.log("Calling signInWithPhoneNumber");
         const confirmation = await signInWithPhoneNumber(
           auth,
           "+91" + form.phone,
           recaptchaVerifierRef.current,
         );
-
+        console.log("Setting confirmation result");
         window.confirmationResult = confirmation;
+        console.log("Setting otp sent to true");
         setOtpSent(true);
+        console.log("Setting otp message");
         setOtpMessage(`OTP sent to +91 ${form.phone}`);
+        console.log("Alerting user");
         alert(
           "OTP sent. Please enter the code and click Book Appointment again.",
         );
       } catch (err: any) {
+        console.log("In catch block for OTP send");
         console.error("Error sending OTP", err);
         alert("Failed to send OTP: " + (err?.message || err));
+        // Clear the recaptcha on error so user can retry
+        if (recaptchaVerifierRef.current) {
+          console.log("Clearing recaptcha on error");
+          recaptchaVerifierRef.current.clear();
+          recaptchaVerifierRef.current = null;
+        }
       } finally {
+        console.log("In finally block for OTP send");
         setBookingLoading(false);
       }
       return;
     }
 
     if (!isVerified) {
+      console.log("Checking if verified");
       if (!otp) {
+        console.log("No OTP entered");
         alert("Enter OTP to verify");
         return;
       }
-
+      console.log("Setting booking loading for verification");
       setBookingLoading(true);
       try {
+        console.log("In try block for verification");
         console.log("🔑 Verifying OTP", otp);
+        console.log("Confirming OTP");
         await window.confirmationResult.confirm(otp);
+        console.log("Setting is verified");
         setIsVerified(true);
+        console.log("Setting otp message");
         setOtpMessage("OTP verified. Booking appointment now...");
         console.log("✅ OTP verified");
       } catch (err: any) {
+        console.log("In catch for verification");
         console.error("OTP verification failed", err);
         alert("Invalid OTP: " + (err?.message || err));
         setBookingLoading(false);
