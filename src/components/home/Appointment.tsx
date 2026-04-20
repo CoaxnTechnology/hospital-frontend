@@ -18,6 +18,7 @@ const Appointment = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [otpMessage, setOtpMessage] = useState("");
+  const [showOtpModal, setShowOtpModal] = useState(false);
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -172,6 +173,7 @@ const Appointment = () => {
         window.confirmationResult = confirmation;
 
         setOtpSent(true);
+        setShowOtpModal(true); // ✅ open modal
         setOtpMessage(`OTP sent to +91 ${form.phone}`);
       } catch (err: any) {
         console.error("OTP SEND ERROR:", err);
@@ -208,7 +210,7 @@ const Appointment = () => {
           resetOTPFlow();
           return;
         }
-        
+
         await window.confirmationResult.confirm(otp); // ✅ THIS WAS MISSING
 
         setIsVerified(true);
@@ -289,6 +291,84 @@ const Appointment = () => {
       setBookingLoading(false);
     }
   };
+
+  const sendOtp = async () => {
+    setBookingLoading(true);
+
+    try {
+      await auth.signOut();
+      setupRecaptcha();
+
+      const confirmation = await signInWithPhoneNumber(
+        auth,
+        "+91" + form.phone,
+        recaptchaVerifierRef.current!,
+      );
+
+      window.confirmationResult = confirmation;
+
+      setOtpSent(true);
+      setShowOtpModal(true);
+      setOtpMessage(`OTP sent to +91 ${form.phone}`);
+    } catch (err: any) {
+      alert("Failed to send OTP");
+      resetOTPFlow();
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+  const verifyAndBook = async () => {
+    if (!otp) {
+      alert("Enter OTP");
+      return;
+    }
+
+    setBookingLoading(true);
+
+    try {
+      if (!window.confirmationResult) {
+        alert("Session expired");
+        resetOTPFlow();
+        return;
+      }
+
+      await window.confirmationResult.confirm(otp);
+
+      // ✅ booking call
+      const token = await auth.currentUser?.getIdToken();
+
+      const res = await fetch(`${BASE_URL}/api/appointments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          patient_name: form.name,
+          phone: form.phone,
+          age: Number(form.age),
+          gender: form.gender,
+          doctor_id: Number(form.doctor),
+          department: form.department,
+          date: form.date,
+          time: form.time,
+          problem: form.problem,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) throw new Error(data.message);
+
+      alert("Appointment Booked ✅");
+      setShowOtpModal(false);
+      window.location.reload();
+    } catch (err: any) {
+      alert("Wrong or expired OTP");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
   const now = new Date();
   const todayDate = new Date().toISOString().split("T")[0];
   const isToday = form.date === todayDate;
@@ -326,28 +406,6 @@ const Appointment = () => {
               value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
             />
-            <div id="recaptcha-container"></div>
-
-            {otpSent && !isVerified && (
-              <input
-                placeholder="Enter OTP"
-                className="input"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-              />
-            )}
-            {otpSent && !isVerified && (
-              <button
-                type="button"
-                onClick={() => {
-                  resetOTPFlow();
-                  handleBookAction(); // 🔥 auto resend
-                }}
-                className="text-blue-600 text-sm"
-              >
-                Resend OTP
-              </button>
-            )}
 
             {otpMessage && (
               <p
@@ -451,7 +509,7 @@ const Appointment = () => {
 
             <button
               type="button"
-              onClick={handleBookAction}
+              onClick={sendOtp}
               disabled={bookingLoading}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 rounded-xl font-medium disabled:opacity-50"
             >
@@ -464,6 +522,49 @@ const Appointment = () => {
                   : "Book Appointment"}
             </button>
           </form>
+          {showOtpModal && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+              <div className="bg-white p-5 rounded-xl w-[300px]">
+                <h3 className="text-lg font-semibold mb-3">Enter OTP</h3>
+
+                <input
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Enter OTP"
+                  className="input w-full mb-2"
+                />
+
+                <p className="text-sm text-blue-600 mb-2">{otpMessage}</p>
+
+                <button
+                  onClick={verifyAndBook}
+                  className="w-full bg-blue-600 text-white py-2 rounded mb-2"
+                >
+                  Verify & Book
+                </button>
+
+                {/* 🔥 CAPTCHA HERE */}
+                <div id="recaptcha-container" className="mb-2"></div>
+
+                <button
+                  onClick={() => {
+                    resetOTPFlow();
+                    sendOtp();
+                  }}
+                  className="text-blue-600 text-sm"
+                >
+                  Resend OTP
+                </button>
+
+                <button
+                  onClick={() => setShowOtpModal(false)}
+                  className="text-red-500 text-sm ml-3"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
