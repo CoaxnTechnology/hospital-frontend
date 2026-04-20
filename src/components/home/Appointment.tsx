@@ -53,15 +53,23 @@ const Appointment = () => {
   };
 
   const resetOTPFlow = () => {
+    console.log("resetOTPFlow: start");
     setOtp("");
+    console.log("resetOTPFlow: otp reset");
     setOtpSent(false);
+    console.log("resetOTPFlow: otpSent false");
     setIsVerified(false);
+    console.log("resetOTPFlow: isVerified false");
     setOtpMessage("");
+    console.log("resetOTPFlow: otpMessage cleared");
 
     if (recaptchaVerifierRef.current) {
+      console.log("resetOTPFlow: clearing recaptcha");
       recaptchaVerifierRef.current.clear();
       recaptchaVerifierRef.current = null;
+      console.log("resetOTPFlow: recaptcha cleared");
     }
+    console.log("resetOTPFlow: end");
   };
   useEffect(() => {
     return () => {
