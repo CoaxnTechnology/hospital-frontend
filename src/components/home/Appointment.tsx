@@ -1,14 +1,24 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getDoctors } from "../../services/doctor.service";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "../../firebase";
+declare global {
+  interface Window {
+    confirmationResult: any;
+  }
+}
 const Appointment = () => {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [slots, setSlots] = useState<any[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [loadingPage, setLoadingPage] = useState(true);
-
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isVerified, setIsVerified] = useState(false);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [otpMessage, setOtpMessage] = useState("");
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -26,6 +36,15 @@ const Appointment = () => {
 
   useEffect(() => {
     loadDoctors();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    };
   }, []);
 
   const loadDoctors = async () => {
@@ -56,6 +75,18 @@ const Appointment = () => {
   }, [location.state, doctors]);
 
   const handleChange = (key: string, value: any) => {
+    if (key === "phone") {
+      setOtpSent(false);
+      setIsVerified(false);
+      setOtp("");
+      setOtpMessage("");
+      // Clear existing recaptcha when phone changes
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear();
+        recaptchaVerifierRef.current = null;
+      }
+    }
+
     setForm((prev) => ({
       ...prev,
       [key]: value,
@@ -102,8 +133,68 @@ const Appointment = () => {
     }
   }, [form.doctor, form.date]);
 
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
+  const handleBookAction = async () => {
+    if (!form.phone) {
+      alert("Enter phone number");
+      return;
+    }
+
+    if (!otpSent) {
+      setBookingLoading(true);
+      try {
+        console.log("📲 Sending OTP to", "+91" + form.phone);
+
+        if (!recaptchaVerifierRef.current) {
+          recaptchaVerifierRef.current = new RecaptchaVerifier(
+            auth,
+            "recaptcha-container",
+            {
+              size: "invisible",
+            },
+          );
+        }
+
+        const confirmation = await signInWithPhoneNumber(
+          auth,
+          "+91" + form.phone,
+          recaptchaVerifierRef.current,
+        );
+
+        window.confirmationResult = confirmation;
+        setOtpSent(true);
+        setOtpMessage(`OTP sent to +91 ${form.phone}`);
+        alert(
+          "OTP sent. Please enter the code and click Book Appointment again.",
+        );
+      } catch (err: any) {
+        console.error("Error sending OTP", err);
+        alert("Failed to send OTP: " + (err?.message || err));
+      } finally {
+        setBookingLoading(false);
+      }
+      return;
+    }
+
+    if (!isVerified) {
+      if (!otp) {
+        alert("Enter OTP to verify");
+        return;
+      }
+
+      setBookingLoading(true);
+      try {
+        console.log("🔑 Verifying OTP", otp);
+        await window.confirmationResult.confirm(otp);
+        setIsVerified(true);
+        setOtpMessage("OTP verified. Booking appointment now...");
+        console.log("✅ OTP verified");
+      } catch (err: any) {
+        console.error("OTP verification failed", err);
+        alert("Invalid OTP: " + (err?.message || err));
+        setBookingLoading(false);
+        return;
+      }
+    }
 
     if (
       !form.name ||
@@ -115,15 +206,20 @@ const Appointment = () => {
       !form.date ||
       !form.time
     ) {
-      alert("⚠️ Please fill all required fields");
+      alert("⚠️ Please fill all required fields before booking");
+      setBookingLoading(false);
       return;
     }
 
     try {
+      const token = await auth.currentUser?.getIdToken();
+      console.log("🔥 Firebase Token:", token);
+
       const res = await fetch(`${BASE_URL}/api/appointments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           patient_name: form.name,
@@ -139,14 +235,17 @@ const Appointment = () => {
       });
 
       const data = await res.json();
+      console.log("📦 API RESPONSE:", data);
 
-      if (!data.success) throw new Error();
+      if (!data.success) throw new Error(data?.message || "Booking failed");
 
       alert("✅ Appointment Booked");
       window.location.reload();
-    } catch (err) {
-      alert("❌ Slot already booked");
-      window.location.reload();
+    } catch (err: any) {
+      console.error("Booking failed", err);
+      alert("❌ Booking failed: " + (err?.message || err));
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -174,7 +273,7 @@ const Appointment = () => {
             Book Appointment
           </h2>
 
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3">
+          <form className="grid grid-cols-1 gap-3">
             <input
               placeholder="Name"
               className="input"
@@ -184,8 +283,27 @@ const Appointment = () => {
             <input
               placeholder="Phone"
               className="input"
+              value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
             />
+            <div id="recaptcha-container"></div>
+
+            {otpSent && !isVerified && (
+              <input
+                placeholder="Enter OTP"
+                className="input"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+            )}
+
+            {otpMessage && (
+              <p
+                className={`text-sm ${isVerified ? "text-green-600" : "text-blue-600"}`}
+              >
+                {otpMessage}
+              </p>
+            )}
 
             <select
               className="input"
@@ -279,8 +397,19 @@ const Appointment = () => {
               onChange={(e) => handleChange("problem", e.target.value)}
             />
 
-            <button className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 rounded-xl font-medium">
-              Book Appointment
+            <button
+              type="button"
+              onClick={handleBookAction}
+              disabled={bookingLoading}
+              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 rounded-xl font-medium disabled:opacity-50"
+            >
+              {bookingLoading
+                ? "Processing..."
+                : otpSent
+                  ? isVerified
+                    ? "Book Appointment"
+                    : "Verify OTP & Book"
+                  : "Book Appointment"}
             </button>
           </form>
         </div>
