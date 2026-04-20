@@ -149,20 +149,16 @@ const Appointment = () => {
     }
   }, [form.doctor, form.date]);
 
-  const handleBookAction = async () => {
-    if (!form.phone) {
-      alert("Enter phone number");
-      return;
-    }
+  const sendOtp = async () => {
+    setShowOtpModal(true); // 🔥 FIRST open modal
 
-    // ================= OTP SEND =================
-    if (!otpSent) {
-      setBookingLoading(true);
-
+    setTimeout(async () => {
       try {
+        setBookingLoading(true);
+
         await auth.signOut();
 
-        setupRecaptcha();
+        setupRecaptcha(); // 🔥 now container exists
 
         const confirmation = await signInWithPhoneNumber(
           auth,
@@ -173,149 +169,17 @@ const Appointment = () => {
         window.confirmationResult = confirmation;
 
         setOtpSent(true);
-        setShowOtpModal(true); // ✅ open modal
         setOtpMessage(`OTP sent to +91 ${form.phone}`);
       } catch (err: any) {
-        console.error("OTP SEND ERROR:", err);
+        console.error("OTP ERROR:", err);
+        alert(err?.message || "Failed to send OTP");
 
-        // 🔥 specific error handling
-        if (err.code === "auth/too-many-requests") {
-          alert("Too many requests. Try again later.");
-        } else if (err.code === "auth/invalid-phone-number") {
-          alert("Invalid phone number");
-        } else {
-          alert("Failed to send OTP");
-        }
-
-        resetOTPFlow(); // 🔥 important
+        resetOTPFlow();
+        setShowOtpModal(false); // 🔥 close modal if fail
       } finally {
         setBookingLoading(false);
       }
-
-      return;
-    }
-
-    // ================= OTP VERIFY =================
-    if (!isVerified) {
-      if (!otp) {
-        alert("Enter OTP");
-        return;
-      }
-
-      setBookingLoading(true);
-
-      try {
-        if (!window.confirmationResult) {
-          alert("Session expired. Please resend OTP");
-          resetOTPFlow();
-          return;
-        }
-
-        await window.confirmationResult.confirm(otp); // ✅ THIS WAS MISSING
-
-        setIsVerified(true);
-        setOtpMessage("OTP verified");
-
-        setBookingLoading(false); // ✅ add this line
-      } catch (err: any) {
-        console.error("OTP VERIFY ERROR:", err);
-
-        if (err.code === "auth/invalid-verification-code") {
-          alert("Wrong OTP");
-        } else if (err.code === "auth/code-expired") {
-          alert("OTP expired. Please resend");
-
-          resetOTPFlow(); // 🔥 fresh start
-        } else {
-          alert("Verification failed");
-        }
-
-        setBookingLoading(false);
-        return;
-      }
-    }
-
-    // ================= FORM VALIDATION =================
-    if (
-      !form.name ||
-      !form.phone ||
-      !form.gender ||
-      !form.age ||
-      !form.doctor ||
-      !form.department ||
-      !form.date ||
-      !form.time
-    ) {
-      alert("Fill all fields");
-      setBookingLoading(false);
-      return;
-    }
-
-    // ================= BOOK APPOINTMENT =================
-    try {
-      const token = await auth.currentUser?.getIdToken();
-
-      if (!token) {
-        throw new Error("User not authenticated");
-      }
-
-      const res = await fetch(`${BASE_URL}/api/appointments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          patient_name: form.name,
-          phone: form.phone,
-          age: Number(form.age),
-          gender: form.gender,
-          doctor_id: Number(form.doctor),
-          department: form.department,
-          date: form.date,
-          time: form.time,
-          problem: form.problem,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) throw new Error(data?.message);
-
-      alert("Appointment Booked ✅");
-      window.location.reload();
-    } catch (err: any) {
-      console.error("BOOKING ERROR:", err);
-      alert(err.message || "Booking failed");
-    } finally {
-      setBookingLoading(false);
-    }
-  };
-
-  const sendOtp = async () => {
-    setBookingLoading(true);
-
-    try {
-      await auth.signOut();
-      setupRecaptcha();
-
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        "+91" + form.phone,
-        recaptchaVerifierRef.current!,
-      );
-
-      window.confirmationResult = confirmation;
-
-      setOtpSent(true);
-      setShowOtpModal(true);
-      setOtpMessage(`OTP sent to +91 ${form.phone}`);
-    } catch (err: any) {
-      alert("Failed to send OTP");
-      resetOTPFlow();
-    } finally {
-      setBookingLoading(false);
-    }
+    }, 300); // 🔥 VERY IMPORTANT
   };
   const verifyAndBook = async () => {
     if (!otp) {
