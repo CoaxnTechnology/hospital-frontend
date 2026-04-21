@@ -12,23 +12,27 @@ type Doctor = {
   dob: string;
   gender: string;
   address: string;
-   user_id: number;
+  user_id: number;
   phone: string;
   department: string;
 };
 
 const Doctors = () => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(""); // actual API search
+  const [searchInput, setSearchInput] = useState(""); // input field
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<any>(null);
 
   // 🔥 GET DOCTORS API CALL
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await getPrivateDoctors();
+        setLoading(true);
+        const res = await getPrivateDoctors(page, 10, search);
         console.log("Doctors API Response:", res);
 
         if (!res.success) {
@@ -38,6 +42,10 @@ const Doctors = () => {
         }
 
         setDoctors(res.data);
+
+        if (res.pagination) {
+          setPagination(res.pagination);
+        }
       } catch (err) {
         setError("Server error");
       } finally {
@@ -46,13 +54,7 @@ const Doctors = () => {
     };
 
     fetchDoctors();
-  }, []);
-
-  const filteredDoctors = doctors.filter((doc) =>
-    `${doc.first_name} ${doc.last_name} ${doc.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
+  }, [page, search]);
 
   // Get doctor's own profile
   const doctorProfile = doctors.find((doc) => doc.user_id === user.id);
@@ -231,19 +233,48 @@ const Doctors = () => {
 
         {/* SEARCH */}
         <div className="bg-white rounded-xl shadow p-4">
-          <input
-            type="text"
-            placeholder="Search doctor..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-1/3 border rounded-lg px-4 py-2"
-          />
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Search doctor by name, phone, ID..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearch(searchInput);
+                  setPage(1);
+                }
+              }}
+              className="flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400 outline-none"
+            />
+
+            <button
+              onClick={() => {
+                setSearch(searchInput);
+                setPage(1);
+              }}
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition"
+            >
+              🔍 Search
+            </button>
+          </div>
         </div>
 
         {/* STATES */}
         {loading && (
-          <div className="text-center text-gray-500 py-10">
-            Loading doctors...
+          <div className="bg-white rounded-xl shadow p-4">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 animate-pulse border-b py-3"
+              >
+                <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -253,105 +284,126 @@ const Doctors = () => {
 
         {/* TABLE */}
         {!loading && !error && (
-          <div className="bg-white rounded-xl shadow overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left">Image</th>
-                  <th className="px-4 py-3 text-left">ID</th>
-                  <th className="px-4 py-3 text-left">First Name</th>
-                  <th className="px-4 py-3 text-left">Last Name</th>
-                  <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">DOB</th>
-                  <th className="px-4 py-3 text-left">Gender</th>
-                  <th className="px-4 py-3 text-left">Address</th>
-                  <th className="px-4 py-3 text-left">Phone</th>
-                  <th className="px-4 py-3 text-left">Department</th>
-                  <th className="px-4 py-3 text-right">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredDoctors.map((doc) => (
-                  <tr
-                    key={doc.id}
-                    className="border-b hover:bg-gray-50 transition"
-                  >
-                    <td className="px-4 py-3">
-                      <img
-                        src={
-                          doc.image
-                            ? `${BASE_URL}${doc.image}`
-                            : "/default-avatar.png"
-                        }
-                        alt={doc.first_name}
-                        className="w-14 h-14 rounded-full border object-cover object-center"
-                      />
-                    </td>
-
-                    <td className="px-4 py-3">{doc.id}</td>
-                    <td className="px-4 py-3">{doc.first_name}</td>
-                    <td className="px-4 py-3">{doc.last_name}</td>
-                    <td className="px-4 py-3">{doc.email}</td>
-
-                    <td className="px-4 py-3">
-                      {new Date(doc.dob).toLocaleDateString("en-IN")}
-                    </td>
-
-                    <td className="px-4 py-3">{doc.gender}</td>
-
-                    <td className="px-4 py-3 max-w-xs truncate">
-                      {doc.address}
-                    </td>
-
-                    <td className="px-4 py-3">{doc.phone}</td>
-
-                    <td className="px-4 py-3">
-                      <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
-                        {doc.department}
-                      </span>
-                    </td>
-
-                    {/* ACTIONS */}
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-2">
-                        {/* EDIT → allowed for all */}
-                        <a
-                          href={`/doctors/edit_doctor/${doc.id}`}
-                          className="w-9 h-9 flex items-center justify-center
-            rounded-lg border text-gray-600
-            hover:bg-blue-50 hover:text-blue-600"
-                        >
-                          <i className="fa fa-pencil"></i>
-                        </a>
-
-                        {/* DELETE → only admin */}
-                        <button
-                          onClick={() => handleDelete(doc.id)}
-                          className="w-9 h-9 flex items-center justify-center
-              rounded-lg border text-gray-600
-              hover:bg-red-50 hover:text-red-600"
-                          title="Delete Doctor"
-                        >
-                          <i className="fa fa-trash"></i>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredDoctors.length === 0 && (
+          <div className="bg-white rounded-2xl shadow overflow-hidden">
+            {/* TABLE WRAPPER */}
+            <div className="overflow-x-auto">
+              <table className="min-w-[900px] w-full text-sm">
+                <thead className="bg-gray-100 text-gray-700">
                   <tr>
-                    <td
-                      colSpan={11}
-                      className="text-center py-10 text-gray-500"
-                    >
-                      No doctors found
-                    </td>
+                    <th className="px-4 py-3 text-left">Doctor</th>
+                    <th className="px-4 py-3 text-left">Contact</th>
+                    <th className="px-4 py-3 text-left">Department</th>
+                    <th className="px-4 py-3 text-right">Action</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {doctors.map((doc) => (
+                    <tr
+                      key={doc.id}
+                      className="border-b hover:bg-gray-50 transition"
+                    >
+                      {/* DOCTOR INFO */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={
+                              doc.image
+                                ? `${BASE_URL}${doc.image}`
+                                : "/default-avatar.png"
+                            }
+                            className="w-12 h-12 rounded-full object-cover border"
+                          />
+
+                          <div>
+                            <div className="font-semibold text-gray-800">
+                              {doc.first_name} {doc.last_name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              ID: {doc.id}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* CONTACT */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="text-gray-700">{doc.email}</div>
+                        <div className="text-xs text-gray-500">{doc.phone}</div>
+                      </td>
+
+                      {/* DEPARTMENT */}
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <span className="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-700">
+                          {doc.department}
+                        </span>
+                      </td>
+
+                      {/* ACTION */}
+                      <td className="px-4 py-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <a
+                            href={`/doctors/edit_doctor/${doc.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                          >
+                            <i className="fa fa-pencil"></i>
+                          </a>
+
+                          <button
+                            onClick={() => handleDelete(doc.id)}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-red-50 text-gray-600 hover:text-red-600 transition"
+                          >
+                            <i className="fa fa-trash"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+
+                  {doctors.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="text-center py-10 text-gray-500"
+                      >
+                        No doctors found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* PAGINATION */}
+            {pagination && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 border-t">
+                <div className="text-sm text-gray-600">
+                  Page {pagination.page} of {pagination.totalPages}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={page === 1}
+                    onClick={() => setPage(page - 1)}
+                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    ⬅
+                  </button>
+
+                  <span className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">
+                    {pagination.page}
+                  </span>
+
+                  <button
+                    disabled={page === pagination.totalPages}
+                    onClick={() => setPage(page + 1)}
+                    className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    ➡
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

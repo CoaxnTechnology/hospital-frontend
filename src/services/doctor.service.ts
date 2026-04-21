@@ -84,8 +84,10 @@ export const getDoctorsByDepartment = async (department: string) => {
 /* =========================
 GET PRIVATE DOCTORS (ROLE BASED)
 ========================= */
-export const getPrivateDoctors = async () => {
-  const res = await fetch(`${API_URL}/private`, {
+export const getPrivateDoctors = async (page = 1, limit = 10, search = "") => {
+  const query = `?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`;
+
+  const res = await fetch(`${API_URL}/private${query}`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
