@@ -342,6 +342,16 @@ const Doctors = () => {
                       {/* ACTION */}
                       <td className="px-4 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          {/* 👁 VIEW */}
+                          <a
+                            href={`/doctors/view/${doc.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
+                            title="View Doctor"
+                          >
+                            <i className="fa fa-eye"></i>
+                          </a>
+
+                          {/* ✏ EDIT */}
                           <a
                             href={`/doctors/edit_doctor/${doc.id}`}
                             className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
@@ -349,6 +359,7 @@ const Doctors = () => {
                             <i className="fa fa-pencil"></i>
                           </a>
 
+                          {/* 🗑 DELETE */}
                           <button
                             onClick={() => handleDelete(doc.id)}
                             className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-red-50 text-gray-600 hover:text-red-600 transition"

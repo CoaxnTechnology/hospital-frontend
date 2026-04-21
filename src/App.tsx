@@ -55,6 +55,7 @@ import AddBranch from "./pages/settings/AddBranch";
 import BranchService from "./pages/settings/BranchService";
 import BranchDetails from "./pages/BranchDetails";
 import PatientQueuePage from "./pages/dashboard/PatientQueuePage";
+import ViewDoctor from "./pages/dashboard/ViewDoctor";
 //import PurchasePage from "./pages/dashboard/PurchasePage";
 //import Login from "./pages/Login";
 
@@ -75,6 +76,7 @@ function App() {
       <Route path="/dashboard/doctors" element={<Doctors />} />
       <Route path="/doctors/add_doctor" element={<AddDoctor />} />
       <Route path="/doctors/edit_doctor/:id" element={<EditDoctor />} />
+      <Route path="/doctors/view/:id" element={<ViewDoctor />} />
       <Route path="/patients" element={<Patients />} />
       <Route path="/patients/history/:id" element={<PatientHistory />} />
       <Route path="/patient-queue" element={<PatientQueuePage />} />
