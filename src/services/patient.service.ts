@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 const API_URL = `${BASE_URL}/api/patients`;
 
 const getToken = () => localStorage.getItem("token");
@@ -6,8 +6,17 @@ const getToken = () => localStorage.getItem("token");
 /* =========================
    GET ALL PATIENTS
 ========================= */
-export const getPatients = async () => {
-  const res = await fetch(API_URL, {
+export const getPatients = async (
+  page = 1,
+  limit = 10,
+  search = "",
+  doctor = "", // 👈 NEW
+) => {
+  const query = `?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}${
+    doctor ? `&doctor=${encodeURIComponent(doctor)}` : ""
+  }`;
+
+  const res = await fetch(`${API_URL}${query}`, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
     },
