@@ -1,356 +1,220 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
-import { getMedicines } from "../../services/medicine.Service";
 import { createSale } from "../../services/medicinesell.service";
-import { getPatientById } from "../../services/patient.service";
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const DispensePage = () => {
-  const navigate = useNavigate();
-
-  const [medicineList, setMedicineList] = useState<any[]>([]);
-
-  const [patientId, setPatientId] = useState("");
-  const [patientDetails, setPatientDetails] = useState<any>(null);
-
-  const [doctorName, setDoctorName] = useState("");
-
-  const [cart, setCart] = useState<any[]>([]);
-  const [notes, setNotes] = useState("");
+  const [prescriptionId, setPrescriptionId] = useState("");
+  const [data, setData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [discount, setDiscount] = useState(0);
 
-  useEffect(() => {
-    loadMedicines();
-  }, []);
+  /* ======================
+     FETCH PRESCRIPTION
+  ====================== */
 
-  const loadMedicines = async () => {
+  const fetchPrescription = async () => {
+    if (!prescriptionId) return alert("Enter prescription ID");
+
     try {
-      const res = await getMedicines();
-      setMedicineList(res.data);
+      setLoading(true);
+
+      const res = await axios.get(
+        `${BASE_URL}/api/prescription/${prescriptionId}`
+      );
+
+      setData(res.data.data || []);
     } catch (err) {
-      console.error(err);
+      alert("Prescription not found");
+      setData([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   /* ======================
-     FETCH PATIENT BY ID
+     CALCULATE QTY
   ====================== */
 
-  const fetchPatient = async (id: string) => {
-    if (!id) {
-      setPatientDetails(null);
-      return;
-    }
-
-    try {
-      const res = await getPatientById(Number(id));
-
-      if (!res.data) {
-        alert("Patient not found");
-        setPatientDetails(null);
-        return;
-      }
-
-      setPatientDetails(res.data);
-    } catch (error) {
-      console.error(error);
-    }
+  const calculateQty = (dosage: string, duration: number) => {
+    if (!dosage) return 0;
+    const parts = dosage.split("-");
+    const perDay = parts.reduce((a, b) => a + Number(b), 0);
+    return perDay * duration;
   };
 
   /* ======================
-     ADD MEDICINE
+     PREPARE ITEMS
   ====================== */
 
-  const addMedicine = (med: any) => {
-    const today = new Date();
-    const expiry = new Date(med.expiry_date);
+  const items = data.map((item) => {
+    const qty = calculateQty(item.dosage, item.duration);
 
-    if (expiry < today) {
-      alert(`${med.name} is expired`);
-      return;
-    }
+    const price = Number(item.selling_price || 0);
+    const gstPercent = Number(item.gst_percentage || 0);
 
-    if (med.quantity <= 0) {
-      alert(`${med.name} is out of stock`);
-      return;
-    }
+    const total = price * qty;
+    const gstAmount = (total * gstPercent) / 100;
 
-    const existing = cart.find((c) => c.id === med.id);
+    return {
+      ...item,
+      qty,
+      price,
+      gstPercent,
+      gstAmount,
+      final: total + gstAmount,
+    };
+  });
 
-    if (existing) {
-      if (existing.qty + 1 > med.quantity) {
-        alert(`Only ${med.quantity} available`);
-        return;
-      }
-
-      existing.qty += 1;
-      setCart([...cart]);
-    } else {
-      setCart([
-        ...cart,
-        {
-          id: med.id,
-          name: med.name,
-          price: Number(med.selling_price),
-          qty: 1,
-          stock: med.quantity,
-        },
-      ]);
-    }
-  };
-
-  /* ======================
-     BILL CALCULATION
-  ====================== */
-
-  const subtotal = cart.reduce((acc, item) => acc + item.price * item.qty, 0);
-
-  const gst = subtotal * 0.05;
-  const total = subtotal + gst - discount;
+  const subtotal = items.reduce((a, b) => a + b.price * b.qty, 0);
+  const totalGst = items.reduce((a, b) => a + b.gstAmount, 0);
+  const total = subtotal + totalGst - discount;
 
   /* ======================
      GENERATE BILL
   ====================== */
 
   const generateBill = async () => {
-    if (!patientDetails) {
-      alert("Enter valid patient ID");
-      return;
-    }
-
-    if (cart.length === 0) {
-      alert("Add medicines first");
-      return;
-    }
-
     try {
-      const payload = {
-        patient_id: patientId,
-        doctor_name: doctorName,
+      await createSale({
+        prescription_no:  Number(prescriptionId),
         discount,
-        notes,
-        items: cart,
-      };
-
-      await createSale(payload);
+      });
 
       alert("Bill Generated Successfully");
-
-      setCart([]);
-      setNotes("");
-      setDiscount(0);
-    } catch (error: any) {
-      console.error(error);
-
-      const message =
-        error?.response?.data?.message || "Bill generation failed";
-
-      alert(message);
+      setData([]);
+      setPrescriptionId("");
+    } catch (err: any) {
+      alert(err);
     }
-  };
-
-  const printBill = () => {
-    window.print();
   };
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gray-50 p-10">
-        <div className="max-w-6xl mx-auto space-y-10">
+      <div className="min-h-screen bg-gray-100 p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+
           {/* HEADER */}
-
           <div>
+            <h1 className="text-3xl font-bold">💊 Prescription Billing</h1>
+            <p className="text-gray-500">
+              Generate bill automatically from prescription
+            </p>
+          </div>
+
+          {/* INPUT */}
+          <div className="bg-white p-6 rounded-2xl shadow flex gap-4">
+            <input
+              placeholder="Enter Prescription ID"
+              value={prescriptionId}
+              onChange={(e) => setPrescriptionId(e.target.value)}
+              className="flex-1 border rounded-xl px-4 py-3"
+            />
+
             <button
-              onClick={() => navigate(-1)}
-              className="text-blue-600 mb-3 hover:underline"
+              onClick={fetchPrescription}
+              className="bg-blue-600 text-white px-6 rounded-xl"
             >
-              ← Back
+              Fetch
             </button>
-
-            <h1 className="text-3xl font-bold">Dispensing</h1>
-            <p className="text-gray-500">Dispense medicines to patients</p>
           </div>
 
-          {/* PATIENT SECTION */}
-
-          <div className="bg-white p-8 rounded-3xl shadow space-y-6">
-            <h2 className="text-xl font-semibold">Patient Details</h2>
-
-            <input
-              placeholder="Enter Patient ID"
-              value={patientId}
-              onChange={(e) => {
-                setPatientId(e.target.value);
-                fetchPatient(e.target.value);
-              }}
-              className="w-full border rounded-xl px-4 py-3"
-            />
-
-            {patientDetails && (
-              <div className="bg-gray-50 p-4 rounded-xl space-y-1">
-                <p>
-                  <b>Name:</b> {patientDetails.name}
-                </p>
-
-                <p>
-                  <b>Phone:</b> {patientDetails.phone}
-                </p>
-
-                <p>
-                  <b>Age:</b> {patientDetails.age}
-                </p>
-
-                <p>
-                  <b>Gender:</b> {patientDetails.gender}
-                </p>
+          {/* PATIENT + DOCTOR */}
+          {data.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl shadow grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Patient</h3>
+                <p>{data[0].patient_name}</p>
               </div>
-            )}
 
-            <input
-              placeholder="Doctor Name"
-              value={doctorName}
-              onChange={(e) => setDoctorName(e.target.value)}
-              className="border rounded-xl px-4 py-3 w-full"
-            />
-          </div>
-
-          {/* MEDICINES */}
-
-          <div className="bg-white p-8 rounded-3xl shadow space-y-6">
-            <h2 className="text-xl font-semibold">Medicines</h2>
-
-            <select
-              onChange={(e) => {
-                const med = medicineList.find(
-                  (m) => m.id === Number(e.target.value),
-                );
-
-                if (med) addMedicine(med);
-              }}
-              className="w-full border rounded-xl px-4 py-3"
-            >
-              <option value="">Select Medicine</option>
-
-              {medicineList.map((med) => (
-                <option key={med.id} value={med.id}>
-                  {med.name} - ₹{med.selling_price}
-                </option>
-              ))}
-            </select>
-
-            {cart.length === 0 ? (
-              <div className="border-dashed border-2 rounded-xl p-10 text-center text-gray-400">
-                No medicines added
+              <div>
+                <h3 className="font-semibold mb-2">Doctor</h3>
+                <p>{data[0].doctor_name}</p>
               </div>
-            ) : (
+            </div>
+          )}
+
+          {/* TABLE */}
+          {data.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl shadow overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th className="px-4 py-3 text-left">Medicine</th>
-                    <th className="px-4 py-3 text-left">Qty</th>
-                    <th className="px-4 py-3 text-left">Price</th>
-                    <th className="px-4 py-3 text-left">Total</th>
-                    <th></th>
+                    <th className="p-3 text-left">Medicine</th>
+                    <th className="p-3">Dosage</th>
+                    <th className="p-3">Days</th>
+                    <th className="p-3">Qty</th>
+                    <th className="p-3">Price</th>
+                    <th className="p-3">GST</th>
+                    <th className="p-3">Total</th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {cart.map((item, index) => (
-                    <tr key={item.id} className="border-b">
-                      <td className="px-4 py-3">{item.name}</td>
-
-                      <td className="px-4 py-3">
-                        <input
-                          type="number"
-                          value={item.qty}
-                          min={1}
-                          onChange={(e) => {
-                            const updated = [...cart];
-                            const newQty = Number(e.target.value);
-
-                            if (newQty > item.stock) {
-                              alert(`Only ${item.stock} available`);
-                              return;
-                            }
-
-                            updated[index].qty = newQty;
-
-                            setCart(updated);
-                          }}
-                          className="w-16 border rounded px-2 py-1"
-                        />
+                  {items.map((item, i) => (
+                    <tr key={i} className="border-b hover:bg-gray-50">
+                      <td className="p-3">{item.name}</td>
+                      <td className="p-3 text-center">{item.dosage}</td>
+                      <td className="p-3 text-center">{item.duration}</td>
+                      <td className="p-3 text-center">{item.qty}</td>
+                      <td className="p-3 text-center">₹{item.price}</td>
+                      <td className="p-3 text-center">
+                        {item.gstPercent}%
                       </td>
-
-                      <td className="px-4 py-3">₹{item.price}</td>
-
-                      <td className="px-4 py-3">₹{item.price * item.qty}</td>
-
-                      <td>
-                        <button
-                          onClick={() =>
-                            setCart(cart.filter((c) => c.id !== item.id))
-                          }
-                          className="text-red-500"
-                        >
-                          🗑
-                        </button>
+                      <td className="p-3 text-center">
+                        ₹{item.final.toFixed(2)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* SUMMARY */}
+          {data.length > 0 && (
+            <div className="bg-white p-6 rounded-2xl shadow space-y-3">
+              <div className="flex justify-between">
+                <span>Subtotal</span>
+                <span>₹{subtotal.toFixed(2)}</span>
+              </div>
 
-          <div className="bg-white p-6 rounded-3xl shadow space-y-4">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>₹{subtotal}</span>
+              <div className="flex justify-between">
+                <span>Total GST</span>
+                <span>₹{totalGst.toFixed(2)}</span>
+              </div>
+
+              <div className="flex justify-between">
+                <span>Discount</span>
+                <input
+                  type="number"
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  className="border px-2 py-1 w-24 text-right"
+                />
+              </div>
+
+              <hr />
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>Total</span>
+                <span>₹{total.toFixed(2)}</span>
+              </div>
             </div>
+          )}
 
-            <div className="flex justify-between">
-              <span>GST (5%)</span>
-              <span>₹{gst}</span>
-            </div>
-
-            <div className="flex justify-between">
-              <span>Discount</span>
-
-              <input
-                type="number"
-                value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                className="border rounded px-2 py-1 w-20 text-right"
-              />
-            </div>
-
-            <hr />
-
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total</span>
-              <span>₹{total}</span>
-            </div>
-          </div>
-
-          {/* ACTION BUTTONS */}
-
-          <div className="flex gap-4">
+          {/* ACTION */}
+          {data.length > 0 && (
             <button
               onClick={generateBill}
-              className="bg-green-600 text-white px-6 py-3 rounded-2xl"
+              className="w-full bg-green-600 text-white py-4 rounded-2xl text-lg"
             >
               Generate Bill
             </button>
+          )}
 
-            <button
-              onClick={printBill}
-              className="bg-blue-600 text-white px-6 py-3 rounded-2xl"
-            >
-              Print Bill
-            </button>
-          </div>
         </div>
       </div>
     </DashboardLayout>

@@ -8,7 +8,11 @@ const getToken = () => localStorage.getItem("token");
 /* =========================
 CREATE SALE / GENERATE BILL
 ========================= */
-export const createSale = async (data: any) => {
+export const createSale = async (data: {
+  prescription_no: number;
+  discount?: number;
+  notes?: string;
+}) => {
   const res = await axios.post(API, data, {
     headers: {
       Authorization: `Bearer ${getToken()}`,
