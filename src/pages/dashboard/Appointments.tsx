@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
-import { getAppointments } from "../../services/appointment.Service";
+import { getAppointmentsPaginated } from "../../services/appointment.Service";
 
 type Appointment = {
   id: number;
@@ -21,32 +21,40 @@ const Appointments = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("today");
   const [customDate, setCustomDate] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
+  const [searchInput, setSearchInput] = useState("");
+
+  const fetchData = async (customPage = page, customSearch = search) => {
+    setLoading(true);
+    try {
+      const res = await getAppointmentsPaginated(
+        customPage,
+        10,
+        filter,
+        customDate,
+        customSearch,
+      );
+
+      setAppointments(res.data || []);
+      setTotalPages(res.pagination?.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true); // 🔥 important
-      try {
-        const data = await getAppointments(filter, customDate);
-        const rows = Array.isArray(data) ? data : data.data;
-        setAppointments(rows || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchData(page, search);
 
-    fetchData();
-    const interval = setInterval(fetchData, 3600000);
+    const interval = setInterval(() => {
+      fetchData(page, search);
+    }, 3600000);
+
     return () => clearInterval(interval);
-  }, [filter, customDate]);
-
-  const filtered = appointments.filter((a) =>
-    `${a.patient_name} ${a.doctor_name} ${a.email}`
-      .toLowerCase()
-      .includes(search.toLowerCase()),
-  );
-
+  }, [filter, customDate, page, search]);
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-IN", {
@@ -55,7 +63,33 @@ const Appointments = () => {
       year: "numeric",
     });
   };
+  const getStatusStyle = (status: string) => {
+    const s = status?.toLowerCase();
 
+    if (s === "pending") {
+      return "bg-yellow-100 text-yellow-700";
+    }
+    if (s === "in consultation") {
+      return "bg-blue-100 text-blue-700";
+    }
+    if (s === "completed") {
+      return "bg-green-100 text-green-700";
+    }
+
+    return "bg-gray-100 text-gray-600";
+  };
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return "-";
+
+    const [hour, minute] = timeStr.split(":");
+    let h = parseInt(hour);
+    const ampm = h >= 12 ? "PM" : "AM";
+
+    h = h % 12;
+    if (h === 0) h = 12;
+
+    return `${h}:${minute} ${ampm}`;
+  };
   return (
     <DashboardLayout>
       <div className="p-4 sm:p-6 space-y-6">
@@ -129,14 +163,32 @@ const Appointments = () => {
         </div>
 
         {/* SEARCH */}
-        <div className="bg-white rounded-xl shadow p-4">
+        <div className="bg-white rounded-2xl shadow-sm border p-4 flex flex-col md:flex-row gap-3">
           <input
             type="text"
-            placeholder="Search by patient, doctor or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-1/3 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Search by name / phone / doctor / ID"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                setSearch(searchInput);
+                setPage(1);
+                fetchData(1, searchInput);
+              }
+            }}
+            className="flex-1 border border-gray-200 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
           />
+
+          <button
+            onClick={() => {
+              setSearch(searchInput);
+              setPage(1);
+              fetchData(1, searchInput);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl transition"
+          >
+            Search
+          </button>
         </div>
 
         {/* TABLE / LIST */}
@@ -153,7 +205,7 @@ const Appointments = () => {
               {/* DESKTOP TABLE */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-gray-100 text-gray-700">
+                  <thead className="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
                     <tr>
                       <th className="px-4 py-3 text-left">Token</th>
                       <th className="px-4 py-3 text-left">Patient</th>
@@ -162,12 +214,17 @@ const Appointments = () => {
                       <th className="px-4 py-3 text-left">Date</th>
                       <th className="px-4 py-3 text-left">Time</th>
                       <th className="px-4 py-3 text-left">Status</th>
+                      <th className="px-4 py-3 text-right">Action</th>{" "}
+                      {/* ✅ ADD THIS */}
                     </tr>
                   </thead>
 
                   <tbody>
-                    {filtered.map((a) => (
-                      <tr key={a.id} className="border-b hover:bg-gray-50">
+                    {appointments.map((a) => (
+                      <tr
+                        key={a.id}
+                        className="border-b hover:bg-blue-50 transition"
+                      >
                         <td className="px-4 py-3 font-semibold text-blue-600">
                           {a.token_number}
                         </td>
@@ -175,41 +232,139 @@ const Appointments = () => {
                         <td className="px-4 py-3">{a.department}</td>
                         <td className="px-4 py-3">{a.doctor_name}</td>
                         <td className="px-4 py-3">{formatDate(a.date)}</td>
-                        <td className="px-4 py-3">{a.time}</td>
+                        <td className="px-4 py-3">{formatTime(a.time)}</td>
                         <td className="px-4 py-3">
-                          <span className="px-3 py-1 text-xs rounded-full bg-gray-100">
+                          <span
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusStyle(a.status)}`}
+                          >
                             {a.status}
                           </span>
+                        </td>
+                        <td className="px-4 py-3 text-right flex justify-end gap-2">
+                          {/* 👁 VIEW PRESCRIPTION */}
+                          <a
+                            href={`/prescription/view/${a.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
+                            title="View Prescription"
+                          >
+                            <i className="fa fa-eye"></i>
+                          </a>
+
+                          {/* ⬇️ DOWNLOAD */}
+                          <a
+                            href={`/prescription/download/${a.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
+                            title="Download Prescription"
+                          >
+                            <i className="fa fa-download"></i>
+                          </a>
+
+                          {/* 🔄 RECALL */}
+                          <button
+                            //onClick={() => handleRecall(a.id)}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-yellow-50 text-gray-600 hover:text-yellow-600 transition"
+                            title="Recall Patient"
+                          >
+                            <i className="fa fa-refresh"></i>
+                          </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                <div className="flex justify-between items-center p-4 border-t">
+                  <span className="text-sm text-gray-500">
+                    Page {page} of {totalPages}
+                  </span>
+
+                  <div className="flex gap-2">
+                    <button
+                      disabled={page === 1}
+                      onClick={() => setPage(page - 1)}
+                      className="px-4 py-2 border rounded"
+                    >
+                      Prev
+                    </button>
+
+                    <button
+                      disabled={page === totalPages}
+                      onClick={() => setPage(page + 1)}
+                      className="px-4 py-2 border rounded"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* 🔥 MOBILE CARDS */}
               <div className="md:hidden p-4 space-y-3">
-                {filtered.map((a) => (
-                  <div key={a.id} className="border rounded-lg p-3 shadow-sm">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-blue-600">
-                        #{a.token_number}
+                {appointments.map((a) => (
+                  <div
+                    key={a.id}
+                    className="border rounded-xl p-4 shadow-sm bg-white"
+                  >
+                    {/* TOP */}
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-blue-600 text-lg">
+                        {a.token_number}
                       </span>
-                      <span className="text-xs">{a.status}</span>
+
+                      <span
+                        className={`px-2 py-1 text-xs rounded-full ${getStatusStyle(a.status)}`}
+                      >
+                        {a.status}
+                      </span>
                     </div>
 
-                    <p className="font-medium">{a.patient_name}</p>
+                    {/* PATIENT */}
+                    <p className="font-medium mt-2 text-gray-800">
+                      {a.patient_name}
+                    </p>
+
                     <p className="text-sm text-gray-500">{a.doctor_name}</p>
 
-                    <div className="flex justify-between text-sm mt-2">
+                    {/* DATE TIME */}
+                    <div className="flex justify-between text-sm mt-2 text-gray-600">
                       <span>{formatDate(a.date)}</span>
-                      <span>{a.time}</span>
+                      <span>{formatTime(a.time)}</span>
+                    </div>
+
+                    {/* 🔥 ACTION BUTTONS */}
+                    <div className="flex justify-between mt-4 gap-2">
+                      {/* VIEW */}
+                      <a
+                        href={`/prescription/view/${a.id}`}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-blue-50 text-blue-600 text-sm font-medium"
+                      >
+                        <i className="fa fa-eye"></i>
+                        View
+                      </a>
+
+                      {/* DOWNLOAD */}
+                      <a
+                        href={`/prescription/download/${a.id}`}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-green-50 text-green-600 text-sm font-medium"
+                      >
+                        <i className="fa fa-download"></i>
+                        Download
+                      </a>
+
+                      {/* RECALL */}
+                      <button
+                        // onClick={() => handleRecall(a.id)}
+                        disabled={a.status === "Completed"}
+                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-yellow-50 text-yellow-600 text-sm font-medium disabled:opacity-50"
+                      >
+                        <i className="fa fa-refresh"></i>
+                        Recall
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {filtered.length === 0 && (
+              {appointments.length === 0 && (
                 <div className="text-center py-10 text-gray-500">
                   No appointments found
                 </div>

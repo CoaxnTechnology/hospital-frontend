@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 const API_URL = `${BASE_URL}/api/appointments`;
 const getToken = () => {
   const token = localStorage.getItem("token");
@@ -194,6 +194,40 @@ export const recallPatient = async (id: number) => {
   const json = await res.json();
 
   console.log("📥 recallPatient RESPONSE:", json);
+
+  return json;
+};
+/**
+ * =========================
+ * GET APPOINTMENTS (PAGINATED + SEARCH)
+ * =========================
+ */
+export const getAppointmentsPaginated = async (
+  page = 1,
+  limit = 10,
+  filter = "today",
+  date?: string,
+  search = ""
+) => {
+  let url = `${API_URL}/list?page=${page}&limit=${limit}&filter=${filter}&search=${encodeURIComponent(search)}`;
+
+  if (filter === "custom" && date) {
+    url += `&date=${date}`;
+  }
+
+  console.log("📡 getAppointmentsPaginated URL:", url);
+
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  console.log("📥 getAppointmentsPaginated STATUS:", res.status);
+
+  const json = await res.json();
+
+  console.log("📥 getAppointmentsPaginated RESPONSE:", json);
 
   return json;
 };

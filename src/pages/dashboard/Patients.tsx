@@ -112,14 +112,6 @@ const Patients = () => {
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-2xl font-semibold text-gray-800">Patients</h2>
-
-          <a
-            href="/patients/add"
-            className="inline-flex flex-shrink-0 min-w-max items-center gap-2 whitespace-nowrap bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow"
-          >
-            <i className="fa fa-plus text-sm"></i>
-            <span className="whitespace-nowrap">Add Patient</span>
-          </a>
         </div>
 
         {/* SEARCH */}
@@ -221,7 +213,6 @@ const Patients = () => {
                       >
                         {/* PATIENT */}
                         <td className="px-5 py-4 flex items-center gap-3">
-                          
                           <div>
                             <p className="font-medium text-gray-800">
                               {p.name}
@@ -266,9 +257,10 @@ const Patients = () => {
                         <td className="px-5 py-4 text-right">
                           <a
                             href={`/patients/history/${p.id}`}
-                            className="px-4 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition"
+                            className="w-9 h-9 inline-flex items-center justify-center rounded-lg bg-blue-400 shadow hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 transition"
+                            title="View Patient"
                           >
-                            View
+                            <i className="fa fa-eye"></i>
                           </a>
                         </td>
                       </tr>
