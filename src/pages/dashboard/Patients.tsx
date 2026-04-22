@@ -3,7 +3,8 @@ import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import patientImg from "../../assets/doctors/doctor_2.png";
 import { getPatients } from "../../services/patient.service";
 import { getDoctors } from "../../services/doctor.service";
-
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 type Patient = {
   id: number;
   name: string;
@@ -64,6 +65,36 @@ const Patients = () => {
 
     fetchDoctors();
   }, []);
+  const downloadExcel = () => {
+    if (!patients.length) return;
+
+    const data = patients.map((p) => ({
+      ID: p.id,
+      Name: p.name,
+      Phone: p.phone,
+      Gender: p.gender,
+      Age: p.age,
+      Doctor: p.doctor_name || "-",
+      Visits: p.total_visits,
+      "Last Visit": p.last_visit ? formatDate(p.last_visit) : "-",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+
+    saveAs(fileData, "Patients.xlsx");
+  };
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
 
@@ -112,6 +143,17 @@ const Patients = () => {
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h2 className="text-2xl font-semibold text-gray-800">Patients</h2>
+
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+
+            <button
+              onClick={downloadExcel}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm"
+            >
+              <i className="fa fa-file-excel mr-2"></i>
+              Export Excel
+            </button>
+          </div>
         </div>
 
         {/* SEARCH */}
