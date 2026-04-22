@@ -10,6 +10,7 @@ type Medicine = {
   category: string;
   expiry_date: string;
   selling_price: number;
+  reorder_level: number;
   quantity: number;
 };
 const formatDate = (dateStr: string) => {
@@ -77,7 +78,7 @@ const MedicineStore = () => {
   /* ================= DASHBOARD STATS ================= */
   const totalMedicines = medicines.length;
 
-  const lowStock = medicines.filter((m) => m.quantity <= 10).length;
+  const lowStock = medicines.filter((m) => m.quantity <= m.reorder_level).length;
 
   const expiringSoon = medicines.filter((m) => {
     const diff =
@@ -234,7 +235,13 @@ const MedicineStore = () => {
 
                     {/* STOCK */}
                     <td className="px-6 py-4">
-                      <span className="bg-orange-100 text-orange-600 px-3 py-1 rounded text-xs">
+                      <span
+                        className={`px-3 py-1 rounded text-xs ${
+                          med.quantity <= 10
+                            ? "bg-red-100 text-red-600" // 🔴 low stock
+                            : "bg-green-100 text-green-600" // 🟢 normal
+                        }`}
+                      >
                         {med.quantity} Pcs
                       </span>
                     </td>

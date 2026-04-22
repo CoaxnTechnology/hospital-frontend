@@ -27,6 +27,7 @@ type MedicineForm = {
   unit: string;
   unitCost: number;
   sellingPrice: number;
+  gstPercentage: number;
   shelfLocation: string;
   batchNumber: string;
   manufacturingDate: string;
@@ -104,6 +105,7 @@ const EditMedicine = () => {
           unit: med.unit || "",
           unitCost: med.unit_cost || 0,
           sellingPrice: med.selling_price || 0,
+          gstPercentage: Number(med.gst_percentage) || 0,
           shelfLocation: med.shelf_location || "",
           batchNumber: med.batch_number || "",
           manufacturingDate: formatInputDate(med.manufacturing_date),
@@ -166,6 +168,7 @@ const EditMedicine = () => {
         unit: form.unit,
         unit_cost: Number(form.unitCost),
         selling_price: Number(form.sellingPrice),
+        gst_percentage: Number(form.gstPercentage),
         shelf_location: form.shelfLocation,
         batch_number: form.batchNumber,
         manufacturing_date: form.manufacturingDate,
@@ -415,11 +418,33 @@ const EditMedicine = () => {
                       className={inputStyle}
                       value={form[key as keyof MedicineForm] as any}
                       onChange={(e) =>
-                        handleChange(key as keyof MedicineForm, e.target.value)
+                        handleChange(
+                          key as keyof MedicineForm,
+                          key === "stock" ||
+                            key === "reorderLevel" ||
+                            key === "unitCost" ||
+                            key === "sellingPrice"
+                            ? Number(e.target.value)
+                            : e.target.value,
+                        )
                       }
                     />
                   </div>
                 ))}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-600">
+                    GST (%)
+                  </label>
+
+                  <input
+                    type="number"
+                    className={inputStyle}
+                    value={form.gstPercentage}
+                    onChange={(e) =>
+                      handleChange("gstPercentage", Number(e.target.value))
+                    }
+                  />
+                </div>
               </div>
             </div>
 

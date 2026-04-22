@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 const API = `${BASE_URL}/api/sales`;
 
 const getToken = () => localStorage.getItem("token");
@@ -12,6 +13,12 @@ export const createSale = async (data: {
   prescription_no: number;
   discount?: number;
   notes?: string;
+  items: {
+    medicine_id: number;
+    qty: number;
+    price: number;
+    gst: number;
+  }[];
 }) => {
   const res = await axios.post(API, data, {
     headers: {
