@@ -1,5 +1,4 @@
-// const BASE_URL = import.meta.env.VITE_BASE_URL;
-const BASE_URL = "http://localhost:5000"; // ✅ HARDCODED FOR TESTING, CHANGE IN PRODUCTION
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 const API_URL = `${BASE_URL}/api/doctors`;
 
 const getToken = () => localStorage.getItem("token");
