@@ -45,6 +45,45 @@ const inputStyle =
 const sectionStyle =
   "bg-white/70 backdrop-blur-xl border border-gray-200 rounded-3xl p-8 shadow-[0_15px_50px_rgba(0,0,0,0.06)] space-y-6";
 
+const SkeletonField = ({ width = "w-full" }: { width?: string }) => (
+  <div className={`h-14 ${width} rounded-2xl bg-gray-200/90 animate-pulse`} />
+);
+
+const EditMedicineSkeleton = () => (
+  <DashboardLayout>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 p-10">
+      <div className="max-w-6xl mx-auto space-y-10">
+        <div className="space-y-4">
+          <div className="h-5 w-24 rounded-full bg-gray-200/90 animate-pulse"></div>
+          <div className="h-12 w-2/5 rounded-full bg-gray-200/90 animate-pulse"></div>
+          <div className="h-4 w-1/3 rounded-full bg-gray-200/90 animate-pulse"></div>
+        </div>
+
+        {[...Array(4)].map((_, sectionIndex) => (
+          <div key={sectionIndex} className={sectionStyle}>
+            <div className="h-6 w-36 rounded-full bg-gray-200/90 animate-pulse mb-6"></div>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <SkeletonField />
+                <SkeletonField width="w-3/4" />
+              </div>
+              <div className="space-y-4">
+                <SkeletonField />
+                <SkeletonField width="w-3/4" />
+              </div>
+            </div>
+          </div>
+        ))}
+
+        <div className="flex justify-end gap-6 pt-4">
+          <div className="h-12 w-32 rounded-2xl bg-gray-200/90 animate-pulse"></div>
+          <div className="h-12 w-48 rounded-2xl bg-gray-200/90 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+  </DashboardLayout>
+);
+
 const EditMedicine = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -54,6 +93,10 @@ const EditMedicine = () => {
   const [strengths, setStrengths] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [medicineLoading, setMedicineLoading] = useState(true);
+  const [dropdownLoading, setDropdownLoading] = useState(true);
+
   const [form, setForm] = useState<MedicineForm>({
     name: "",
     genericName: "",
@@ -85,7 +128,10 @@ const EditMedicine = () => {
   };
   useEffect(() => {
     const fetchMedicine = async () => {
-      if (!id) return;
+      if (!id) {
+        setMedicineLoading(false);
+        return;
+      }
 
       try {
         const res = await getMedicineById(Number(id));
@@ -119,14 +165,21 @@ const EditMedicine = () => {
         });
       } catch (error) {
         console.error("Error loading medicine", error);
+      } finally {
+        setMedicineLoading(false);
       }
     };
 
     fetchMedicine();
   }, [id]);
+
   useEffect(() => {
     fetchDropdownData();
   }, []);
+
+  useEffect(() => {
+    setLoading(medicineLoading || dropdownLoading);
+  }, [medicineLoading, dropdownLoading]);
 
   const fetchDropdownData = async () => {
     try {
@@ -145,6 +198,8 @@ const EditMedicine = () => {
       setSuppliers(Array.isArray(sup) ? sup : sup.data || []);
     } catch (err) {
       console.error(err);
+    } finally {
+      setDropdownLoading(false);
     }
   };
   const handleChange = (field: keyof MedicineForm, value: any) => {
@@ -191,6 +246,10 @@ const EditMedicine = () => {
       alert("Failed to update medicine");
     }
   };
+
+  if (loading) {
+    return <EditMedicineSkeleton />;
+  }
 
   return (
     <DashboardLayout>
