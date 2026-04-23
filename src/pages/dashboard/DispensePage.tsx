@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { createSale } from "../../services/medicinesell.service";
 import { generateBillHTML } from "../../generateBillHTML";
+import { useHospital } from "../../context/HospitalContext";
 import axios from "axios";
 import {
   Search,
@@ -13,7 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-const BASE_URL = "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const DispensePage = () => {
   const [prescriptionId, setPrescriptionId] = useState("");
@@ -25,7 +26,8 @@ const DispensePage = () => {
   /* ======================
      FETCH PRESCRIPTION
   ====================== */
-
+  const { hospital, loading: hospitalLoading } = useHospital();
+  console.log("Hospital from context:", hospital, "Loading:", hospitalLoading);
   const fetchPrescription = async () => {
     if (!prescriptionId) return alert("Enter prescription ID");
 
@@ -97,7 +99,10 @@ const DispensePage = () => {
   /* ======================
      GENERATE BILL
   ====================== */
-
+  if (!hospital) {
+    alert("Hospital data not loaded");
+    return;
+  }
   const generateBill = async () => {
     console.log("Starting generateBill");
     setGenerating(true);
@@ -134,8 +139,9 @@ const DispensePage = () => {
       console.log("Preparing bill data");
       const billData = {
         hospital: {
-          name: "Your Hospital Name",
-          address: "Your Address",
+          name: hospital.name,
+          address: hospital.address,
+          logo: hospital.logo,
         },
         patient: {
           name: data[0]?.patient_name,
