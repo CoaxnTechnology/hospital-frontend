@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL="http://localhost:5000"
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { getPrivateDoctors } from "../../services/doctor.service";
@@ -104,7 +105,7 @@ const Doctors = () => {
                     <img
                       src={
                         doctorProfile.image
-                          ? `${BASE_URL}${doctorProfile.image}`
+                          ? `${BASE_URL}${doctorProfile.image}?t=${doctorProfile.id}`
                           : "/default-avatar.png"
                       }
                       alt={doctorProfile.first_name}
@@ -309,7 +310,7 @@ const Doctors = () => {
                           <img
                             src={
                               doc.image
-                                ? `${BASE_URL}${doc.image}`
+                                ? `${BASE_URL}${doc.image}?t=${doc.id}`
                                 : "/default-avatar.png"
                             }
                             className="w-12 h-12 rounded-full object-cover border"

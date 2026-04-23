@@ -5,7 +5,10 @@ import userImg from "../../assets/icons/user-06.jpg";
 import { createDoctor } from "../../services/doctor.service";
 import { useEffect } from "react";
 import { getDepartments } from "../../services/department.service";
+import imageCompression from "browser-image-compression";
+
 const AddDoctor = () => {
+  console.log("AddDoctor component start");
   const navigate = useNavigate();
 
   // 🔥 FORM STATE
@@ -34,15 +37,18 @@ const AddDoctor = () => {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >,
   ) => {
+    console.log("handleChange called", e.target.name, e.target.value);
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log("handleSubmit called");
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
+      console.log("Creating formData");
       // 🔥 FORM DATA BANANA
       const formData = new FormData();
 
@@ -52,33 +58,42 @@ const AddDoctor = () => {
 
       // 🔥 IMAGE ADD KARO
       if (imageFile) {
-        formData.append("image", imageFile);
+        console.log("Appending image");
+        formData.append("image", imageFile, imageFile.name);
       }
 
+      console.log("Calling createDoctor API");
       // 🔥 API CALL
       const res = await createDoctor(formData);
 
       if (!res.success) {
+        console.log("API call failed", res.message);
         setError(res.message || "Doctor creation failed");
         return;
       }
 
+      console.log("Doctor created successfully");
       alert("Doctor created successfully. Email sent.");
       navigate("/dashboard/doctors");
     } catch (err) {
+      console.log("Error in handleSubmit", err);
       setError("Server error");
     } finally {
       setLoading(false);
     }
   };
   useEffect(() => {
+    console.log("useEffect for fetchDepartments");
     const fetchDepartments = async () => {
+      console.log("fetchDepartments called");
       try {
         const res = await getDepartments();
 
         if (res.success && res.data) {
+          console.log("Departments fetched", res.data);
           setDepartments(res.data);
         } else {
+          console.log("No departments");
           setDepartments([]);
         }
       } catch (err) {
@@ -89,6 +104,7 @@ const AddDoctor = () => {
 
     fetchDepartments();
   }, []);
+  console.log("Rendering AddDoctor component");
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -285,31 +301,41 @@ const AddDoctor = () => {
                 type="file"
                 accept="image/*"
                 hidden
-                onChange={(e) => {
+                onChange={async (e) => {
+                  console.log("File input changed");
                   const file = e.target.files?.[0];
                   if (!file) return;
 
                   // 🔥 TYPE CHECK
                   if (!file.type.startsWith("image/")) {
+                    console.log("Invalid file type");
                     alert("❌ Only image files allowed");
                     return;
                   }
 
+                  console.log("Compressing image");
                   // 🔥 SIZE CHECK (500KB)
-                  const maxSize = 500 * 1024;
 
-                  if (file.size > maxSize) {
-                    alert("❌ Image must be less than 500KB");
-                    return;
+                  const options = {
+                    maxSizeMB: 0.5,
+                    maxWidthOrHeight: 800,
+                    useWebWorker: true,
+                  };
+                  try {
+                    const compressedFile = await imageCompression(
+                      file,
+                      options,
+                    );
+
+                    console.log("Image compressed");
+                    setImageFile(compressedFile);
+                    setPreview(URL.createObjectURL(compressedFile));
+                  } catch (err) {
+                    console.error("Compression error:", err);
+                    alert("Image compression failed");
                   }
-
-                  setImageFile(file);
-                  setPreview(URL.createObjectURL(file));
                 }}
               />
-              <p className="text-xs text-gray-500 mt-2">
-                Max size: 500KB • Recommended: 300x300px • Format: JPG, PNG
-              </p>
             </div>
 
             {/* BIO */}

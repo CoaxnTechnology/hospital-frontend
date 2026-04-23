@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000"; // ✅ HARDCODED FOR TESTING, CHANGE IN PRODUCTION
 const API_URL = `${BASE_URL}/api/doctors`;
 
 const getToken = () => localStorage.getItem("token");
@@ -26,15 +27,15 @@ export const getDoctorById = async (id: string) => {
 /* =========================
 CREATE DOCTOR
 ========================= */
-export const createDoctor = async (data: any) => {
+export const createDoctor = async (formData: FormData) => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
+      Authorization: `Bearer ${getToken()}`, // ✅ only token
     },
-    body: JSON.stringify(data),
+    body: formData, // ✅ IMPORTANT
   });
+
   return res.json();
 };
 

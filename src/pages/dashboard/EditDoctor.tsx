@@ -5,6 +5,7 @@ import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import userImg from "../../assets/icons/user-06.jpg";
 import { getDoctorById, updateDoctor } from "../../services/doctor.service";
 import { getDepartments } from "../../services/department.service";
+import imageCompression from "browser-image-compression";
 type DoctorForm = {
   firstName: string;
   lastName: string;
@@ -349,33 +350,45 @@ const EditDoctor = () => {
                 type="file"
                 accept="image/*"
                 hidden
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
                   if (!file) return;
 
-                  // 🔥 TYPE CHECK
+                  // ❌ TYPE CHECK
                   if (!file.type.startsWith("image/")) {
-                    alert("❌ Only image files allowed");
+                    alert("❌ Only image allowed");
                     return;
                   }
 
-                  // 🔥 SIZE CHECK (500KB)
-                  const maxSize = 500 * 1024;
+                  // 🔥 COMPRESSION OPTIONS
+                  const options = {
+                    maxSizeMB: 0.7, // 300 KB
+                    maxWidthOrHeight: 800, // resize
+                    useWebWorker: true,
+                  };
 
-                  if (file.size > maxSize) {
-                    alert("❌ Image must be less than 500KB");
-                    return;
+                  try {
+                    console.log("📦 Original size:", file.size / 1024, "KB");
+
+                    const compressedFile = await imageCompression(
+                      file,
+                      options,
+                    );
+
+                    console.log(
+                      "✅ Compressed size:",
+                      compressedFile.size / 1024,
+                      "KB",
+                    );
+
+                    setPreview(URL.createObjectURL(compressedFile));
+                    setImageFile(compressedFile);
+                  } catch (err) {
+                    console.error("❌ Compression error", err);
                   }
-
-                  setPreview(URL.createObjectURL(file));
-                  setImageFile(file);
                 }}
               />
-              <p className="text-xs text-gray-500 mt-2">
-              Max size: 500KB • Recommended: 300x300px • Format: JPG, PNG
-            </p>
             </div>
-            
 
             {/* BIO */}
             <div className="md:col-span-2">

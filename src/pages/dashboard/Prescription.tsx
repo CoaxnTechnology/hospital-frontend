@@ -6,8 +6,9 @@ import { createPrescription } from "../../services/prescription.service";
 import { getMedicines } from "../../services/medicine.Service";
 import logo from "../../assets/icons/logo.png";
 import { getHospital } from "../../services/setting.service";
-
+import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
 type MedicineRow = {
+  id: number;
   name: string;
   dosage: string;
   duration: string;
@@ -18,16 +19,26 @@ const Prescription = () => {
   const navigate = useNavigate();
 
   const [hospital, setHospital] = useState<any>(null);
-
-  const [rows, setRows] = useState<MedicineRow[]>([
-    { name: "", dosage: "", duration: "" },
+  const [prescriptionId, setPrescriptionId] = useState<number | null>(null);
+  const [rows, setRows] = useState<any[]>([
+    {
+      id: Date.now(),
+      name: "",
+      dosage: "",
+      duration: "",
+      filteredMedicines: [],
+      filteredDosage: [],
+    },
   ]);
-  const dosageOptions = ["1-0-1", "1-1-1", "0-1-0", "1-0-0"];
-  const [allMedicines, setAllMedicines] = useState<any[]>([]);
-  const [filteredMedicines, setFilteredMedicines] = useState<any[]>([]);
 
+  const dosageOptions = ["1-0-1", "1-1-1", "0-1-0", "1-0-0", "0-0-1"];
+  const [allMedicines, setAllMedicines] = useState<any[]>([]);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [activeDosageIndex, setActiveDosageIndex] = useState<number | null>(
+    null,
+  );
   const [filteredDosage, setFilteredDosage] = useState<string[]>([]);
   /* ================= FETCH MEDICINES ================= */
   useEffect(() => {
@@ -43,7 +54,19 @@ const Prescription = () => {
       console.error("❌ Medicine fetch error:", err);
     }
   };
-
+  const addRow = () => {
+    setRows((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        name: "",
+        dosage: "",
+        duration: "",
+        filteredMedicines: [],
+        filteredDosage: [],
+      },
+    ]);
+  };
   /* ================= FETCH APPOINTMENT ================= */
   useEffect(() => {
     const fetchAppointment = async () => {
@@ -96,47 +119,56 @@ const Prescription = () => {
 
   /* ================= SEARCH MEDICINE ================= */
   const handleSearch = (value: string, index: number) => {
-    updateRow(index, "name", value);
+    setActiveIndex(index);
 
-    if (!value) {
-      setFilteredMedicines([]);
-      return;
-    }
-
-    const filtered = allMedicines.filter((m: any) =>
-      m.name.toLowerCase().includes(value.toLowerCase()),
+    setRows((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? {
+              ...row,
+              name: value,
+              filteredMedicines: value
+                ? allMedicines.filter((m: any) =>
+                    m.name.toLowerCase().includes(value.toLowerCase()),
+                  )
+                : [],
+            }
+          : row,
+      ),
     );
-
-    setFilteredMedicines(filtered);
   };
-
-  /* ================= ADD ROW ================= */
-  const addRow = () => {
-    setRows([...rows, { name: "", dosage: "", duration: "" }]);
-  };
-  const handleDosageSearch = (value: string, index: number) => {
-    updateRow(index, "dosage", value);
-
-    if (!value) return setFilteredDosage([]);
-
-    const filtered = dosageOptions.filter((d) =>
-      d.toLowerCase().includes(value.toLowerCase()),
-    );
-
-    setFilteredDosage(filtered);
-  };
-
   /* ================= UPDATE ROW ================= */
   const updateRow = (
     index: number,
     field: keyof MedicineRow,
     value: string,
   ) => {
+    console.log("✏️ Updating row:", { index, field, value });
     const updated = [...rows];
     updated[index][field] = value;
+    console.log("✅ Row updated:", updated[index]);
     setRows(updated);
+    console.log("📝 All rows after update:", updated);
   };
+  const handleDosageSearch = (value: string, index: number) => {
+    setActiveDosageIndex(index);
 
+    setRows((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? {
+              ...row,
+              dosage: value,
+              filteredDosage: value
+                ? dosageOptions.filter((d) =>
+                    d.toLowerCase().includes(value.toLowerCase()),
+                  )
+                : [],
+            }
+          : row,
+      ),
+    );
+  };
   /* ================= SAVE PRESCRIPTION ================= */
   const savePrescription = async () => {
     try {
@@ -155,7 +187,9 @@ const Prescription = () => {
       console.log("📥 PRESCRIPTION RESPONSE:", res);
 
       if (res.success) {
-        navigate("/consultant");
+        navigate("/consultant", {
+          state: { prescriptionId: res.prescriptionId },
+        });
       } else {
         alert("Failed to save prescription");
       }
@@ -166,8 +200,63 @@ const Prescription = () => {
   };
 
   /* ================= PRINT ================= */
-  const printPrescription = () => {
-    window.print();
+  const handlePrint = () => {
+    console.log("🖨️ Starting print prescription...");
+    console.log("Hospital data:", hospital);
+    if (!hospital) {
+      console.error("❌ Hospital not loaded!");
+      alert("Hospital not loaded");
+      return;
+    }
+
+    console.log("🏥 Hospital loaded:", hospital.name);
+    console.log("👤 Patient data:", {
+      id: patient?.patient_id,
+      name: patient?.patient_name,
+    });
+    console.log("👨‍⚕️ Doctor data:", {
+      name: patient?.doctor_name,
+      department: patient?.department,
+    });
+    console.log("💊 Medicines:", rows);
+
+    const html = generatePrescriptionHTML({
+      hospital,
+      patient: {
+        id: patient?.patient_id,
+        name: patient?.patient_name,
+        age: patient?.age,
+        mobile: patient?.mobile,
+      },
+      doctor: {
+        name: patient?.doctor_name,
+        department: patient?.department,
+        signature: patient?.signature, // optional
+      },
+      medicines: rows,
+      date: new Date().toLocaleDateString(),
+    });
+
+    console.log("✅ HTML generated:", html.substring(0, 200) + "...");
+
+    console.log("🪟 Opening new window for printing...");
+    const win = window.open("", "_blank");
+    console.log("✅ Window opened:", win);
+
+    console.log("📝 Writing HTML to window...");
+    win.document.write(html);
+    console.log("✅ HTML written");
+
+    console.log("🔒 Closing document...");
+    win.document.close();
+    console.log("✅ Document closed");
+
+    console.log("⏱️ Setting timeout for print (300ms)...");
+    setTimeout(() => {
+      console.log("🖨️ Printing prescription now...");
+      win.print();
+      console.log("✅ Print dialog opened");
+    }, 300);
   };
 
   if (loading) {
@@ -221,7 +310,7 @@ const Prescription = () => {
 
             <div className="text-sm text-right">
               <p>
-                <strong>Prescription ID:</strong> #{id}
+                <strong>Prescription ID:</strong> #{prescriptionId || "New"}
               </p>
               <p>
                 <strong>Date:</strong> {new Date().toLocaleDateString()}
@@ -265,7 +354,7 @@ const Prescription = () => {
 
             <tbody>
               {rows.map((row, i) => (
-                <tr key={i}>
+                <tr key={row.id}>
                   <td className="border px-3 py-2 text-center">{i + 1}</td>
 
                   {/* ✅ ONLY CHANGE HERE */}
@@ -277,14 +366,25 @@ const Prescription = () => {
                       placeholder="Medicine name"
                     />
 
-                    {filteredMedicines.length > 0 && (
+                    {activeIndex === i && row.filteredMedicines.length > 0 && (
                       <div className="absolute bg-white border w-full z-10 max-h-40 overflow-auto">
-                        {filteredMedicines.map((m: any) => (
+                        {row.filteredMedicines.map((m: any) => (
                           <div
                             key={m.id}
                             onClick={() => {
-                              updateRow(i, "name", m.name);
-                              setFilteredMedicines([]);
+                              setRows((prev) =>
+                                prev.map((r, idx) =>
+                                  idx === i
+                                    ? {
+                                        ...r,
+                                        name: m.name,
+                                        filteredMedicines: [],
+                                      }
+                                    : r,
+                                ),
+                              );
+
+                              setActiveIndex(null);
                             }}
                             className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                           >
@@ -303,22 +403,30 @@ const Prescription = () => {
                       placeholder="1-0-1"
                     />
 
-                    {filteredDosage.length > 0 && (
-                      <div className="absolute left-0 top-full mt-1 bg-white border w-full z-50 max-h-40 overflow-auto rounded shadow">
-                        {filteredDosage.map((d, idx) => (
-                          <div
-                            key={idx}
-                            onClick={() => {
-                              updateRow(i, "dosage", d);
-                              setFilteredDosage([]);
-                            }}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                          >
-                            {d}
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    {activeDosageIndex === i &&
+                      row.filteredDosage.length > 0 && (
+                        <div className="absolute left-0 top-full mt-1 bg-white border w-full z-50 max-h-40 overflow-auto rounded shadow">
+                          {row.filteredDosage.map((d, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => {
+                                setRows((prev) =>
+                                  prev.map((r, idx) =>
+                                    idx === i
+                                      ? { ...r, dosage: d, filteredDosage: [] }
+                                      : r,
+                                  ),
+                                );
+
+                                setActiveDosageIndex(null);
+                              }}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            >
+                              {d}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                   </td>
 
                   <td className="border px-3 py-2">

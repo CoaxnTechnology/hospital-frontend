@@ -1,6 +1,8 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
+import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
+import { useHospital } from "../../context/HospitalContext";
 import {
   getDoctorAppointments,
   completeAppointment,
@@ -31,7 +33,7 @@ const Consultant = () => {
 
   const doctor = JSON.parse(localStorage.getItem("user") || "{}");
   const doctor_id = doctor?.id;
-
+  const { hospital } = useHospital();
   /**
    * LOAD QUEUE
    */
@@ -164,6 +166,57 @@ const Consultant = () => {
       </div>
     </div>
   );
+  const handlePrintPrescription = async (prescriptionId: number) => {
+    try {
+      if (!hospital) return alert("Hospital not loaded");
+
+      // 🔥 API call (data fetch)
+      const res = await fetch(`${BASE_URL}/api/prescription/${prescriptionId}`);
+      const data = await res.json();
+
+      const rows = data.data;
+
+      if (!rows || rows.length === 0) {
+        return alert("No prescription data");
+      }
+
+      // 🔥 prepare data
+      const first = rows[0];
+
+      const html = generatePrescriptionHTML({
+        hospital,
+        prescriptionId: prescriptionId,
+        patient: {
+          id: first.patient_id,
+          name: first.patient_name,
+          age: first.age,
+          mobile: first.mobile,
+        },
+        doctor: {
+          name: first.doctor_name,
+          department: first.department,
+        },
+        medicines: rows.map((r: any) => ({
+          name: r.medicine_name,
+          dosage: r.dosage,
+          duration: r.duration,
+        })),
+        date: new Date().toLocaleDateString(),
+      });
+
+      // 🔥 open + print
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
+
+      setTimeout(() => {
+        win.print();
+      }, 300);
+    } catch (err) {
+      console.error(err);
+      alert("Print error");
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -268,34 +321,20 @@ const Consultant = () => {
                             <>
                               <button
                                 onClick={() =>
-                                  window.open(
-                                    `${BASE_URL}/api/prescription/${a.prescription_id}/pdf`,
-                                  )
+                                  handlePrintPrescription(a.prescription_id)
                                 }
-                                className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg"
-                              >
-                                View / Download
-                              </button>
-
-                              <button
-                                onClick={() => {
-                                  const url = `${BASE_URL}/api/prescription/${a.prescription_id}/pdf`;
-
-                                  const printWindow = window.open(
-                                    url,
-                                    "_blank",
-                                  );
-
-                                  if (printWindow) {
-                                    printWindow.onload = () => {
-                                      printWindow.focus();
-                                      printWindow.print();
-                                    };
-                                  }
-                                }}
                                 className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-lg"
                               >
                                 Print
+                              </button>
+
+                              <button
+                                onClick={() =>
+                                  handlePrintPrescription(a.prescription_id)
+                                }
+                                className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg"
+                              >
+                                View
                               </button>
 
                               <button
