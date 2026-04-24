@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL
+ const BASE_URL = import.meta.env.VITE_BASE_URL
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -9,6 +9,7 @@ import {
   getPatientHistory,
 } from "../../services/patient.service";
 import { generateBillHTML } from "../../generateBillHTML";
+import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
 
 // Skeleton Loading Component
 const SkeletonRow = () => (
@@ -183,6 +184,54 @@ const PatientHistory = () => {
 
     fetchBills();
   }, [id]);
+  const handleViewPrescription = async (prescriptionId: number) => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/prescription/${prescriptionId}`);
+
+      const data = await res.json();
+      const rows = data.data;
+
+      if (!rows || rows.length === 0) {
+        alert("No prescription data");
+        return;
+      }
+
+      const first = rows[0];
+
+      const html = generatePrescriptionHTML({
+        hospital,
+        prescriptionId,
+        patient: {
+          id: first.patient_id,
+          name: first.patient_name,
+          age: first.age,
+          mobile: first.mobile,
+        },
+        doctor: {
+          name: first.doctor_name,
+          department: first.department,
+        },
+        medicines: rows.map((r: any) => ({
+          name: r.medicine_name,
+          dosage: r.dosage,
+          duration: r.duration,
+        })),
+        date: new Date().toLocaleDateString(),
+      });
+
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
+
+      // 🔥 auto print optional
+      setTimeout(() => {
+        win.print();
+      }, 300);
+    } catch (err) {
+      console.error(err);
+      alert("Error loading prescription");
+    }
+  };
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
@@ -286,16 +335,16 @@ const PatientHistory = () => {
 
                         {/* 🔥 BILL COLUMN */}
                         <td className="px-4 py-4 text-right flex justify-end gap-2">
-                          {/* PDF */}
-                          {v.pdf_path && (
-                            <a
-                              href={`${BASE_URL}${v.pdf_path}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          {/* 🔥 NEW RUNTIME PRESCRIPTION */}
+                          {v.prescription_id && (
+                            <button
+                              onClick={() =>
+                                handleViewPrescription(v.prescription_id)
+                              }
                               className="bg-green-500 text-white px-3 py-1 rounded text-xs"
                             >
                               <i className="fa fa-file-pdf"></i>
-                            </a>
+                            </button>
                           )}
 
                           {/* BILL */}

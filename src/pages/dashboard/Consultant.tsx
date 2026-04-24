@@ -1,5 +1,5 @@
-// const BASE_URL = import.meta.env.VITE_BASE_URL;
-const BASE_URL = "http://localhost:5000";
+ const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
