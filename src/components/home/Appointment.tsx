@@ -1,5 +1,5 @@
-// const BASE_URL = import.meta.env.VITE_BASE_URL;
-const BASE_URL = "http://localhost:5000";
+ const BASE_URL = import.meta.env.VITE_BASE_URL;
+
 import { useEffect, useState, useRef } from "react";
 import { getDoctors } from "../../services/doctor.service";
 import { useLocation, useNavigate } from "react-router-dom";
