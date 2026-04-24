@@ -310,10 +310,6 @@ const Prescription = () => {
                   className="h-24 w-24 object-contain"
                   alt="logo"
                 />
-                {console.log(
-                  "📁 LOGO SRC:",
-                  hospital?.logo ? `${BASE_URL}${hospital.logo}` : logo,
-                )}
 
                 <div>
                   <h3 className="text-xl font-bold text-gray-800">
