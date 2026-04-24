@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 import { useEffect, useState, useRef } from "react";
 import { getDoctors } from "../../services/doctor.service";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -111,19 +112,44 @@ const Appointment = () => {
   }, [location.state, doctors]);
 
   const handleChange = (key: string, value: any) => {
-    if (key === "phone") {
-      console.log("handleChange: phone change detected", value);
-      resetOTPFlow();
-      console.log("handleChange: OTP flow reset after phone change");
+    // 🔥 DATE FIX
+    if (key === "date") {
+      console.log("📅 RAW DATE:", value);
 
-      // Also clear the DOM element
+      // ❌ ignore incomplete year (main fix)
+      if (!value || value.length !== 10) {
+        console.log("⛔ Skipping incomplete date");
+        return;
+      }
+
+      const parsed = new Date(value);
+
+      if (isNaN(parsed.getTime())) {
+        console.log("❌ Invalid date");
+        return;
+      }
+
+      const fixedDate = parsed.toISOString().split("T")[0];
+
+      console.log("✅ FINAL DATE:", fixedDate);
+
+      setForm((prev) => ({
+        ...prev,
+        date: fixedDate,
+      }));
+
+      return;
+    }
+
+    // 🔥 PHONE RESET
+    if (key === "phone") {
+      resetOTPFlow();
     }
 
     setForm((prev) => ({
       ...prev,
       [key]: value,
     }));
-    console.log("handleChange: form updated", { key, value });
   };
 
   const getToday = () => {
@@ -149,7 +175,7 @@ const Appointment = () => {
       const res = await fetch(
         `${BASE_URL}/api/doctors/${doctorId}/slots?date=${date}`,
       );
-
+      console.log("🚀 API CALL DATE:", date);
       const data = await res.json();
       setSlots(data.data || []);
     } catch (err) {
@@ -161,11 +187,18 @@ const Appointment = () => {
   };
 
   useEffect(() => {
-    if (form.doctor && form.date) {
-      loadSlots(Number(form.doctor), form.date);
-    }
-  }, [form.doctor, form.date]);
+    if (!form.doctor || !form.date) return;
 
+    // ❌ ignore wrong year
+    if (!form.date.startsWith("20")) {
+      console.log("⛔ Skipping wrong year:", form.date);
+      return;
+    }
+
+    console.log("🔥 FINAL API CALL:", form.doctor, form.date);
+
+    loadSlots(Number(form.doctor), form.date);
+  }, [form.doctor, form.date]);
   const sendOtp = async () => {
     try {
       setBookingLoading(true);
@@ -296,7 +329,7 @@ const Appointment = () => {
     }
   };
   const now = new Date();
-  const todayDate = new Date().toISOString().split("T")[0];
+  const todayDate = getToday();
   const isToday = form.date === todayDate;
 
   if (loadingPage) {
@@ -310,7 +343,17 @@ const Appointment = () => {
       </div>
     );
   }
+  const formatTime = (time: string) => {
+    const [hour, minute] = time.split(":");
 
+    let h = Number(hour);
+    const ampm = h >= 12 ? "PM" : "AM";
+
+    h = h % 12;
+    if (h === 0) h = 12;
+
+    return `${h}:${minute} ${ampm}`;
+  };
   return (
     <section className="w-full">
       <div className="w-full">
@@ -372,7 +415,11 @@ const Appointment = () => {
               type="date"
               className="input"
               min={getToday()}
-              onChange={(e) => handleChange("date", e.target.value)}
+              value={form.date}
+              onChange={(e) => {
+                console.log("📅 Selected Date:", e.target.value);
+                handleChange("date", e.target.value);
+              }}
             />
 
             <div>
@@ -410,7 +457,7 @@ const Appointment = () => {
                           ${isPast ? "bg-gray-300 text-gray-500" : ""}
                         `}
                       >
-                        {slot}
+                        {formatTime(slot)}
                       </button>
                     );
                   })}
