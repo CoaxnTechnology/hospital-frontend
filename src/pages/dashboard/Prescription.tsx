@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -105,6 +106,7 @@ const Prescription = () => {
       const data = res?.data;
 
       console.log("🟢 FINAL HOSPITAL DATA:", data);
+      console.log("📁 HOSPITAL LOGO PATH:", data?.logo);
 
       setHospital(data);
     } catch (err) {
@@ -181,10 +183,20 @@ const Prescription = () => {
       };
 
       console.log("📤 PRESCRIPTION PAYLOAD:", payload);
+      console.log(
+        "📁 CHECKING FOR FILE PATHS IN PAYLOAD:",
+        JSON.stringify(payload).includes("file") ||
+          JSON.stringify(payload).includes("path"),
+      );
 
       const res = await createPrescription(payload);
 
       console.log("📥 PRESCRIPTION RESPONSE:", res);
+      console.log(
+        "📁 CHECKING FOR FILE PATHS IN RESPONSE:",
+        JSON.stringify(res).includes("file") ||
+          JSON.stringify(res).includes("path"),
+      );
 
       if (res.success) {
         navigate("/consultant", {
@@ -238,6 +250,10 @@ const Prescription = () => {
     });
 
     console.log("✅ HTML generated:", html.substring(0, 200) + "...");
+    console.log(
+      "📁 CHECKING FOR FILE PATHS IN HTML:",
+      html.includes("file") || html.includes("path") || html.includes(BASE_URL),
+    );
 
     console.log("🪟 Opening new window for printing...");
     const win = window.open("", "_blank");
@@ -295,6 +311,10 @@ const Prescription = () => {
                   className="h-24 w-24 object-contain"
                   alt="logo"
                 />
+                {console.log(
+                  "📁 LOGO SRC:",
+                  hospital?.logo ? `${BASE_URL}${hospital.logo}` : logo,
+                )}
 
                 <div>
                   <h3 className="text-xl font-bold text-gray-800">

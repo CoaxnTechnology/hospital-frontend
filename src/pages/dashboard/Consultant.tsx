@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
@@ -50,22 +51,38 @@ const Consultant = () => {
 
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(loadQueue, 3000);
-    return () => clearInterval(interval);
+    // const interval = setInterval(loadQueue, 3000);
+    // return () => clearInterval(interval);
   }, []);
 
   /**
    * CALL NEXT PATIENT
    */
   const callNext = async () => {
-    const today = new Date().toLocaleDateString("en-CA");
+    console.log("🔥 CALL NEXT PATIENT BUTTON CLICKED");
+    console.log("👨‍⚕️ DOCTOR ID:", doctor_id);
 
-    await nextPatient({
+    const today = new Date().toISOString().slice(0, 10);
+    console.log("📅 TODAY'S DATE:", today);
+
+    const payload = {
       doctor_id,
       date: today,
-    });
+    };
+    console.log("📤 PAYLOAD FOR NEXT PATIENT:", payload);
 
+    try {
+      console.log("🚀 CALLING nextPatient API...");
+      const res = await nextPatient(payload);
+      console.log("📥 NEXT PATIENT API RESPONSE:", res);
+      console.log("✅ NEXT PATIENT API SUCCESS");
+    } catch (error) {
+      console.error("❌ NEXT PATIENT API ERROR:", error);
+    }
+
+    console.log("🔄 CALLING loadQueue AFTER NEXT PATIENT");
     loadQueue();
+    console.log("✅ loadQueue CALLED");
   };
 
   /**
