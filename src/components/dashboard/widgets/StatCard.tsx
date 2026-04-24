@@ -8,20 +8,26 @@ type Props = {
 };
 
 const StatCard = ({ title, value, gradient, icon }: Props) => {
+  console.log("StatCard props:", { title, value, gradient, icon });
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    console.log("useEffect triggered with value:", value);
     let start = 50;
     const duration = 1200; // animation speed (ms)
     const increment = Math.ceil(value / (duration / 16));
+    console.log("increment:", increment);
 
     const timer = setInterval(() => {
       start += increment;
+      console.log("start:", start, "value:", value);
       if (start >= value) {
         setCount(value);
+        console.log("setCount to value:", value);
         clearInterval(timer);
       } else {
         setCount(start);
+        console.log("setCount to start:", start);
       }
     }, 16);
 
@@ -39,6 +45,7 @@ const StatCard = ({ title, value, gradient, icon }: Props) => {
       <div className="relative z-10">
         <h4 className="text-sm font-medium opacity-90">{title}</h4>
         <h2 className="text-3xl font-bold mt-2">{count}</h2>
+        {console.log("Rendering count:", count)}
       </div>
 
       {/* BOTTOM GLOW */}

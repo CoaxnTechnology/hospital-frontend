@@ -28,36 +28,12 @@ const Dashboard = () => {
 
   // 🔥 FILTER LOGIC (FINAL)
   const handleFilterChange = (value: string) => {
+    console.log("handleFilterChange called with value:", value);
     setFilterType(value);
 
     const today = new Date();
     let start = new Date();
     let end = new Date();
-
-    switch (value) {
-      case "today":
-        start = new Date();
-        end = new Date();
-        break;
-
-      case "tomorrow":
-        start.setDate(today.getDate() + 1);
-        end.setDate(today.getDate() + 1);
-        break;
-
-      case "thisMonth":
-        start = new Date(today.getFullYear(), today.getMonth(), 1);
-        end = new Date();
-        break;
-
-      case "6months":
-        start.setMonth(today.getMonth() - 6);
-        end = new Date();
-        break;
-
-      case "custom":
-        return; // custom me manual input use hoga
-    }
 
     setStartDate(formatLocalDate(start));
     setEndDate(formatLocalDate(end));
@@ -65,34 +41,20 @@ const Dashboard = () => {
 
   // 🔥 API CALL
   const fetchDashboard = async () => {
-    try {
-      const data = await getDashboardData(startDate, endDate);
-      console.log("CHART DATA:", data?.chart);
-      console.log("API DATA:", data);
+  console.log("fetchDashboard called with:", startDate, endDate);
 
-      setStats(data?.stats || {});
-      setAppointments(data?.appointments || []);
-      // 🔥 CHART ALWAYS MONTH DATA
-      const today = new Date();
-      const start = new Date(today.getFullYear(), today.getMonth(), 1);
-      const end = new Date();
+  try {
+    const data = await getDashboardData(startDate, endDate);
 
-      const formatLocalDate = (date: Date) => {
-        const offset = date.getTimezoneOffset();
-        const localDate = new Date(date.getTime() - offset * 60000);
-        return localDate.toISOString().split("T")[0];
-      };
+    console.log("✅ FINAL DATA:", data);
 
-      const chartData = await getDashboardData(
-        formatLocalDate(start),
-        formatLocalDate(end),
-      );
-
-      setChart(chartData?.chart || []);
-    } catch (err) {
-      console.error("Dashboard Error:", err);
-    }
-  };
+    setStats(data?.stats || {});
+    setAppointments(data?.appointments || []);
+    setChart(data?.chart || []); // 🔥 SAME DATA
+  } catch (err) {
+    console.error("Dashboard Error:", err);
+  }
+};
 
   // 🔥 DEFAULT LOAD
   useEffect(() => {
@@ -104,7 +66,16 @@ const Dashboard = () => {
     if (startDate && endDate) {
       const today = new Date();
       const todayStr = formatLocalDate(today);
+      console.log(
+        "useEffect check: startDate:",
+        startDate,
+        "endDate:",
+        endDate,
+        "todayStr:",
+        todayStr,
+      );
       if (startDate === todayStr && endDate === todayStr) {
+        console.log("Calling fetchDashboard for today's data");
         fetchDashboard();
       }
     }
@@ -144,7 +115,10 @@ const Dashboard = () => {
 
             {/* APPLY */}
             <button
-              onClick={fetchDashboard}
+              onClick={() => {
+                console.log("Apply button clicked, calling fetchDashboard");
+                fetchDashboard();
+              }}
               className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600"
             >
               Apply

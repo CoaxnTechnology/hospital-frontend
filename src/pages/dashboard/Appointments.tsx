@@ -241,15 +241,6 @@ const Appointments = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-right flex justify-end gap-2">
-                          {/* 👁 VIEW PRESCRIPTION */}
-                          <a
-                            href={`/prescription/view/${a.id}`}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-blue-50 text-gray-600 hover:text-blue-600 transition"
-                            title="View Prescription"
-                          >
-                            <i className="fa fa-eye"></i>
-                          </a>
-
                           {/* ⬇️ DOWNLOAD */}
                           <a
                             href={`/prescription/download/${a.id}`}
