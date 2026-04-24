@@ -21,6 +21,7 @@ const DoctorDetailsPage = () => {
     const fetchDoctor = async () => {
       try {
         const res = await getDoctors();
+        console.log("Doctors fetched:", res.data);
         const found = res.data.find((d: any) => d.id == id);
         setDoctor(found);
       } catch (err) {
@@ -163,9 +164,8 @@ const DoctorDetailsPage = () => {
           </h2>
 
           <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-            {fullName} is a highly experienced specialist in{" "}
-            {doctor.department || "medical field"}. The doctor focuses on
-            providing quality care and ensuring patient satisfaction.
+            {doctor.biography ||
+              `${fullName} is a specialist in ${doctor.department}.`}
           </p>
         </div>
       </div>

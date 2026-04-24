@@ -29,7 +29,7 @@ const Leaves = () => {
   const [filteredLeaves, setFilteredLeaves] = useState<Leave[]>([]);
   const [filter, setFilter] = useState("All");
   const [loading, setLoading] = useState(true);
-
+  const [viewLeave, setViewLeave] = useState<Leave | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<number | null>(null);
   const [remark, setRemark] = useState("");
 
@@ -165,7 +165,7 @@ const Leaves = () => {
                   </span>
                 </div>
                 <h3 className="text-3xl font-bold mb-1">{total}</h3>
-                <p className="text-blue-100 text-sm">Leave Requests</p>
+                <p className="text-blue-100 text-sm">Requests</p>
               </div>
 
               <div className="bg-gradient-to-br from-yellow-500 to-orange-500 shadow-lg rounded-xl p-6 text-white hover:shadow-xl transition-shadow duration-300">
@@ -187,7 +187,7 @@ const Leaves = () => {
                   </span>
                 </div>
                 <h3 className="text-3xl font-bold mb-1">{approved}</h3>
-                <p className="text-green-100 text-sm">Successfully Approved</p>
+                <p className="text-green-100 text-sm">Approved</p>
               </div>
 
               <div className="bg-gradient-to-br from-red-500 to-red-600 shadow-lg rounded-xl p-6 text-white hover:shadow-xl transition-shadow duration-300">
@@ -198,7 +198,7 @@ const Leaves = () => {
                   </span>
                 </div>
                 <h3 className="text-3xl font-bold mb-1">{rejected}</h3>
-                <p className="text-red-100 text-sm">Not Approved</p>
+                <p className="text-red-100 text-sm">Rejected</p>
               </div>
             </>
           )}
@@ -238,9 +238,7 @@ const Leaves = () => {
                   <th className="px-6 py-4 font-medium text-gray-900">From</th>
                   <th className="px-6 py-4 font-medium text-gray-900">To</th>
                   <th className="px-6 py-4 font-medium text-gray-900">Days</th>
-                  <th className="px-6 py-4 font-medium text-gray-900">
-                    Reason
-                  </th>
+
                   <th className="px-6 py-4 font-medium text-gray-900">
                     Status
                   </th>
@@ -316,9 +314,6 @@ const Leaves = () => {
                         <td className="px-6 py-4 text-gray-900">
                           {leave.total_days}
                         </td>
-                        <td className="px-6 py-4 text-gray-900 max-w-xs truncate">
-                          {leave.reason}
-                        </td>
 
                         <td className="px-6 py-4">
                           {leave.status === "Pending" && (
@@ -342,25 +337,37 @@ const Leaves = () => {
                           {leave.admin_remark || "-"}
                         </td>
 
-                        {role === "admin" && leave.status === "Pending" && (
-                          <td className="px-6 py-4">
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleApprove(leave.id)}
-                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                              >
-                                Approve
-                              </button>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2 items-center">
+                            {/* 👁 VIEW ICON */}
+                            <a
+                              onClick={() => setViewLeave(leave)}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition cursor-pointer"
+                              title="View Reason"
+                            >
+                              <i className="fa fa-eye"></i>
+                            </a>
 
-                              <button
-                                onClick={() => setSelectedLeave(leave.id)}
-                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          </td>
-                        )}
+                            {/* ✅ ADMIN ACTIONS */}
+                            {role === "admin" && leave.status === "Pending" && (
+                              <>
+                                <button
+                                  onClick={() => handleApprove(leave.id)}
+                                  className="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-xs"
+                                >
+                                  Approve
+                                </button>
+
+                                <button
+                                  onClick={() => setSelectedLeave(leave.id)}
+                                  className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
               </tbody>
@@ -426,10 +433,7 @@ const Leaves = () => {
                         <span className="font-medium">To:</span>{" "}
                         {formatDate(leave.date_to)} ({leave.total_days} days)
                       </p>
-                      <p>
-                        <span className="font-medium">Reason:</span>{" "}
-                        {leave.reason}
-                      </p>
+
                       {leave.admin_remark && (
                         <p>
                           <span className="font-medium">Remark:</span>{" "}
@@ -461,8 +465,9 @@ const Leaves = () => {
         </div>
 
         {/* POPUP */}
+        {/* REJECT MODAL */}
         {selectedLeave && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
               <h3 className="text-lg font-semibold mb-4">Reject Leave</h3>
 
@@ -487,6 +492,55 @@ const Leaves = () => {
                   className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
                   Reject
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 👁 VIEW MODAL */}
+        {viewLeave && (
+          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+              <h3 className="text-lg font-semibold mb-4">Leave Details</h3>
+
+              <div className="space-y-2 text-sm text-gray-700">
+                <p>
+                  <strong>Type:</strong> {viewLeave.leave_type}
+                </p>
+                <p>
+                  <strong>From:</strong> {formatDate(viewLeave.date_from)}
+                </p>
+                <p>
+                  <strong>To:</strong> {formatDate(viewLeave.date_to)}
+                </p>
+                <p>
+                  <strong>Days:</strong> {viewLeave.total_days}
+                </p>
+              </div>
+
+              <div className="mt-4">
+                <p className="text-sm font-medium mb-1">Reason:</p>
+                <div className="bg-gray-100 p-3 rounded text-sm text-gray-800">
+                  {viewLeave.reason}
+                </div>
+              </div>
+
+              {viewLeave.admin_remark && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-1">Remark:</p>
+                  <div className="bg-gray-100 p-3 rounded text-sm">
+                    {viewLeave.admin_remark}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={() => setViewLeave(null)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Close
                 </button>
               </div>
             </div>
