@@ -225,7 +225,7 @@ const Leaves = () => {
         <div className="bg-white rounded-lg shadow overflow-hidden">
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-sm text-sm table-fixed">
               <thead className="bg-gray-50">
                 <tr>
                   {role === "admin" && (
@@ -246,15 +246,13 @@ const Leaves = () => {
                     Remark
                   </th>
 
-                  {role === "admin" && (
-                    <th className="px-6 py-4 font-medium text-gray-900">
-                      Action
-                    </th>
-                  )}
+                  <th className="px-6 py-4 font-medium text-gray-900">
+                    {role === "admin" ? "Action" : "Details"}
+                  </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 text-center">
                 {loading
                   ? Array.from({ length: 5 }).map((_, i) => (
                       <tr key={i}>
@@ -337,7 +335,7 @@ const Leaves = () => {
                           {leave.admin_remark || "-"}
                         </td>
 
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <div className="flex gap-2 items-center">
                             {/* 👁 VIEW ICON */}
                             <a
@@ -467,8 +465,8 @@ const Leaves = () => {
         {/* POPUP */}
         {/* REJECT MODAL */}
         {selectedLeave && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
               <h3 className="text-lg font-semibold mb-4">Reject Leave</h3>
 
               <textarea
@@ -500,8 +498,8 @@ const Leaves = () => {
 
         {/* 👁 VIEW MODAL */}
         {viewLeave && (
-          <div className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+          <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center">
+            <div className="bg-gray-50 rounded-xl shadow-lg w-full max-w-md p-6">
               <h3 className="text-lg font-semibold mb-4">Leave Details</h3>
 
               <div className="space-y-2 text-sm text-gray-700">
@@ -521,7 +519,7 @@ const Leaves = () => {
 
               <div className="mt-4">
                 <p className="text-sm font-medium mb-1">Reason:</p>
-                <div className="bg-gray-100 p-3 rounded text-sm text-gray-800">
+                <div className="bg-white p-3 rounded text-sm text-gray-800 border">
                   {viewLeave.reason}
                 </div>
               </div>

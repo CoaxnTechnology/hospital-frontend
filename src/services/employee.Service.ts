@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 const API_URL = `${BASE_URL}/api/employees`;
 
 const getToken = () => localStorage.getItem("token");
@@ -6,16 +7,28 @@ const getToken = () => localStorage.getItem("token");
 /* =========================
    GET ALL EMPLOYEES
 ========================= */
-export const getEmployees = async () => {
-  const res = await fetch(API_URL, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`,
+export const getEmployees = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = "",
+) => {
+  console.log("👉 API CALL:", { page, limit, search });
+
+  const res = await fetch(
+    `${API_URL}?page=${page}&limit=${limit}&search=${search}`,
+    {
+      headers: {
+        Authorization: `Bearer ${getToken()}`,
+      },
     },
-  });
+  );
 
-  return await res.json();
+  const data = await res.json();
+
+  console.log("👉 RESPONSE:", data);
+
+  return data;
 };
-
 /* =========================
    GET SINGLE EMPLOYEE
 ========================= */
