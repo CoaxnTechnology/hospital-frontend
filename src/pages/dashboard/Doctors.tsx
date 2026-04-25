@@ -1,9 +1,10 @@
- const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { getPrivateDoctors } from "../../services/doctor.service";
 import { deleteDoctor } from "../../services/doctor.service";
+import { FaWhatsapp } from "react-icons/fa";
 type Doctor = {
   id: number;
   image: string;
@@ -347,9 +348,21 @@ const Doctors = () => {
                           <a
                             href={`/doctors/view/${doc.id}`}
                             className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
-                            title="View Doctor"
                           >
                             <i className="fa fa-eye"></i>
+                          </a>
+
+                          {/* 🟢 WHATSAPP */}
+                          <a
+                            href={`https://wa.me/91${doc.phone}?text=Hello Doctor`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-9 h-9 flex items-center justify-center rounded-lg 
+             bg-white shadow border border-gray-200
+             hover:bg-green-50 hover:border-green-400
+             text-green-600 transition"
+                          >
+                            <FaWhatsapp className="text-lg" />
                           </a>
 
                           {/* ✏ EDIT */}

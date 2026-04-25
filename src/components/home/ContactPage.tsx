@@ -1,3 +1,5 @@
+const BASE_URL = "http://localhost:5000";
+//const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
 import { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
@@ -11,9 +13,11 @@ const ContactPage = () => {
     phone: "",
     message: "",
   });
-
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
   const [hospital, setHospital] = useState<any>(null);
   const [branches, setBranches] = useState<any[]>([]);
+  const [loadingPage, setLoadingPage] = useState(true);
 
   useEffect(() => {
     load();
@@ -21,6 +25,8 @@ const ContactPage = () => {
 
   const load = async () => {
     try {
+      setLoadingPage(true);
+
       const hRes = await getHospital();
       setHospital(hRes.data);
 
@@ -28,6 +34,8 @@ const ContactPage = () => {
       setBranches(bRes);
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoadingPage(false);
     }
   };
 
@@ -35,12 +43,46 @@ const ContactPage = () => {
     setForm({ ...form, [key]: value });
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    console.log("CONTACT FORM:", form);
-    alert("Message Sent (Demo)");
-  };
 
+    setLoadingSubmit(true);
+    setSuccessMsg("");
+
+    try {
+      console.log("👉 Sending:", form);
+
+      const res = await fetch(`${BASE_URL}/api/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+
+      const data = await res.json();
+
+      console.log("👉 Response:", data);
+
+      if (data.success) {
+        setSuccessMsg("Message sent successfully ✅");
+
+        setForm({
+          name: "",
+          email: "",
+          phone: "",
+          message: "",
+        });
+      } else {
+        setSuccessMsg("Failed to send ❌");
+      }
+    } catch (err) {
+      console.error(err);
+      setSuccessMsg("Server error ❌");
+    } finally {
+      setLoadingSubmit(false);
+    }
+  };
   /* 🔥 MAP GENERATOR */
   const getMap = (address: string) => {
     return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
@@ -75,6 +117,7 @@ const ContactPage = () => {
                   placeholder="Your Name"
                   required
                   className="input"
+                  value={form.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                 />
 
@@ -83,6 +126,7 @@ const ContactPage = () => {
                   placeholder="Your Email"
                   required
                   className="input"
+                  value={form.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                 />
 
@@ -91,6 +135,7 @@ const ContactPage = () => {
                   placeholder="Phone Number"
                   required
                   className="input"
+                  value={form.phone}
                   onChange={(e) => handleChange("phone", e.target.value)}
                 />
 
@@ -98,29 +143,37 @@ const ContactPage = () => {
                   rows={5}
                   placeholder="Your Message"
                   className="input"
+                  value={form.message}
                   onChange={(e) => handleChange("message", e.target.value)}
                 />
 
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition"
+                  disabled={loadingSubmit}
+                  className={`w-full py-3 rounded-xl text-white font-medium transition flex items-center justify-center gap-2
+    ${
+      loadingSubmit
+        ? "bg-gray-400 cursor-not-allowed"
+        : "bg-blue-600 hover:bg-blue-700 active:scale-95"
+    }`}
                 >
-                  Send Message
+                  {loadingSubmit ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
                 </button>
+                {successMsg && (
+                  <p className="text-center text-sm mt-3 text-green-600 font-medium">
+                    {successMsg}
+                  </p>
+                )}
               </form>
 
               {/* 🔥 EMAIL LINK */}
-              {hospital?.email && (
-                <p className="mt-4 text-sm text-gray-600">
-                  📧 Email:{" "}
-                  <a
-                    href={`mailto:${hospital.email}`}
-                    className="text-blue-600 underline"
-                  >
-                    {hospital.email}
-                  </a>
-                </p>
-              )}
             </div>
 
             {/* 🔥 LOCATIONS */}
