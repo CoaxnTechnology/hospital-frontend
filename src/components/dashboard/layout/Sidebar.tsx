@@ -177,12 +177,18 @@ const Sidebar = ({ sidebarOpen, closeSidebar }: Props) => {
               label="Settings"
               sidebarOpen={sidebarOpen}
             />
-            <SidebarLink
-              to="/patient-queue"
-              icon="users"
-              label="Patient Queue"
-              sidebarOpen={sidebarOpen}
-            />
+            <li>
+              <a
+                href="/patient-queue"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex items-center gap-3 px-4 py-3 text-sm text-gray-600 hover:bg-gray-100"
+              >
+                <i className="fa fa-users text-lg" />
+                {sidebarOpen && <span>Patient Queue</span>}
+                {!sidebarOpen && <Tooltip text="Patient Queue" />}
+              </a>
+            </li>
           </ul>
         </nav>
       </aside>

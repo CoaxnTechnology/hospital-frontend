@@ -316,16 +316,26 @@ const AddDoctor = () => {
                   console.log("Compressing image");
                   // 🔥 SIZE CHECK (500KB)
 
-                  const options = {
-                    maxSizeMB: 0.5,
-                    maxWidthOrHeight: 800,
-                    useWebWorker: true,
+                  const compressImageToTarget = async (file) => {
+                    let quality = 0.9;
+                    let compressed = file;
+
+                    while (compressed.size / 1024 > 700 && quality > 0.4) {
+                      const options = {
+                        maxSizeMB: 1,
+                        maxWidthOrHeight: 1200,
+                        initialQuality: quality,
+                        useWebWorker: true,
+                      };
+
+                      compressed = await imageCompression(compressed, options); // ✅ FIX
+                      quality -= 0.1;
+                    }
+
+                    return compressed;
                   };
                   try {
-                    const compressedFile = await imageCompression(
-                      file,
-                      options,
-                    );
+                    const compressedFile = await compressImageToTarget(file);
 
                     console.log("Image compressed");
                     setImageFile(compressedFile);
