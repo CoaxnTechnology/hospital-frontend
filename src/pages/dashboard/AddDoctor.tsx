@@ -308,19 +308,27 @@ const AddDoctor = () => {
 
                   // 🔥 TYPE CHECK
                   if (!file.type.startsWith("image/")) {
-                    console.log("Invalid file type");
                     alert("❌ Only image files allowed");
                     return;
                   }
 
-                  console.log("Compressing image");
-                  // 🔥 SIZE CHECK (500KB)
+                  // 🔥 SIZE CHECK (400KB RULE)
+                  if (file.size <= 400 * 1024) {
+                    console.log("✅ Image under 400KB → no compression");
 
-                  const compressImageToTarget = async (file) => {
+                    setImageFile(file);
+                    setPreview(URL.createObjectURL(file));
+                    return;
+                  }
+
+                  // 🔥 COMPRESSION START (only > 400KB)
+                  console.log("⚡ Large image → compressing...");
+
+                  const compressImageToTarget = async (file: File) => {
                     let quality = 0.9;
                     let compressed = file;
 
-                    while (compressed.size / 1024 > 700 && quality > 0.4) {
+                    while (compressed.size > 400 * 1024 && quality > 0.4) {
                       const options = {
                         maxSizeMB: 1,
                         maxWidthOrHeight: 1200,
@@ -328,16 +336,22 @@ const AddDoctor = () => {
                         useWebWorker: true,
                       };
 
-                      compressed = await imageCompression(compressed, options); // ✅ FIX
+                      compressed = await imageCompression(compressed, options);
                       quality -= 0.1;
                     }
 
                     return compressed;
                   };
+
                   try {
                     const compressedFile = await compressImageToTarget(file);
 
-                    console.log("Image compressed");
+                    console.log(
+                      "✅ Image compressed:",
+                      compressedFile.size / 1024,
+                      "KB",
+                    );
+
                     setImageFile(compressedFile);
                     setPreview(URL.createObjectURL(compressedFile));
                   } catch (err) {
