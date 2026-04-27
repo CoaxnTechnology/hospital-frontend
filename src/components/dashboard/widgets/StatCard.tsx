@@ -45,7 +45,7 @@ const StatCard = ({ title, value, gradient, icon }: Props) => {
       <div className="relative z-10">
         <h4 className="text-sm font-medium opacity-90">{title}</h4>
         <h2 className="text-3xl font-bold mt-2">{count}</h2>
-        {console.log("Rendering count:", count)}
+     
       </div>
 
       {/* BOTTOM GLOW */}
