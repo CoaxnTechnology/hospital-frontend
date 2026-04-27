@@ -6,7 +6,7 @@ import {
   updateHero,
   deleteHero,
 } from "../../services/setting.service";
-
+import imageCompression from "browser-image-compression";
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 const HeroSettings = () => {
@@ -41,9 +41,8 @@ const HeroSettings = () => {
   };
 
   // FILE
-  const handleFile = (e: any) => {
+  const handleFile = async (e: any) => {
     const file = e.target.files[0];
-
     if (!file) return;
 
     // 🔥 TYPE CHECK
@@ -52,18 +51,62 @@ const HeroSettings = () => {
       return;
     }
 
-    // 🔥 SIZE CHECK (1MB)
-    const maxSize = 1 * 1024 * 1024;
+    console.log("📦 Original size:", file.size / 1024, "KB");
 
-    if (file.size > maxSize) {
-      alert("❌ Image size should be less than 1MB");
+    const maxSize = 400 * 1024; // 🔥 400KB RULE
+
+    // ✅ SMALL FILE → NO COMPRESSION
+    if (file.size <= maxSize) {
+      console.log("✅ Under 400KB → no compression");
+
+      setForm((prev) => ({
+        ...prev,
+        image: file,
+      }));
+      const url = URL.createObjectURL(file);
+      setPreview(url);
       return;
     }
 
-    setForm({ ...form, image: file });
-    setPreview(URL.createObjectURL(file));
-  };
+    console.log("⚡ Large image → compressing...");
 
+    // 🔥 COMPRESS FUNCTION
+    const compressImage = async (file: File) => {
+      let quality = 0.9;
+      let compressed = file;
+      let attempts = 0;
+
+      while (compressed.size > maxSize && quality > 0.4 && attempts < 6) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          initialQuality: quality,
+          useWebWorker: true,
+        };
+
+        compressed = await imageCompression(compressed, options);
+        quality -= 0.1;
+        attempts++;
+      }
+
+      return compressed;
+    };
+
+    try {
+      const compressedFile = await compressImage(file);
+
+      console.log("✅ Compressed size:", compressedFile.size / 1024, "KB");
+      setForm((prev) => ({
+        ...prev,
+        image: compressedFile,
+      }));
+
+      setPreview(URL.createObjectURL(compressedFile));
+    } catch (err) {
+      console.error("❌ Compression error", err);
+      alert("Compression failed");
+    }
+  };
   // 🔥 SUBMIT FIXED
   const handleSubmit = async (e: any) => {
     e.preventDefault();
