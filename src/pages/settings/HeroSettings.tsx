@@ -230,9 +230,7 @@ const HeroSettings = () => {
               className="hidden"
             />
           </label>
-          <p className="text-xs text-gray-500 mt-2 text-center">
-            Max size: 1MB • Recommended: 1200x600px • Format: JPG, PNG
-          </p>
+          
           {/* PREVIEW */}
           {preview && (
             <img src={preview} className="w-32 h-24 object-cover rounded-xl" />
