@@ -4,6 +4,7 @@ import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { uploadSignature, getSignature } from "../../services/setting.service";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import imageCompression from "browser-image-compression";
 const Signature = () => {
   const [file, setFile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -176,7 +177,7 @@ const Signature = () => {
               <input
                 type="file"
                 accept="image/png, image/jpeg"
-                onChange={(e: any) => {
+                onChange={async (e: any) => {
                   const file = e.target.files[0];
                   if (!file) return;
 
@@ -186,23 +187,64 @@ const Signature = () => {
                     return;
                   }
 
-                  // 🔥 SIZE CHECK (200KB recommended for signature)
+                  console.log("📦 Original size:", file.size / 1024, "KB");
+
                   const maxSize = 200 * 1024;
 
-                  if (file.size > maxSize) {
-                    alert("❌ Signature must be less than 200KB");
+                  // ✅ SMALL FILE → NO COMPRESSION
+                  if (file.size <= maxSize) {
+                    console.log("✅ Under 200KB → no compression");
+                    setFile(file);
+                     setSignatureUrl(URL.createObjectURL(file));
                     return;
                   }
 
-                  setFile(file);
+                  console.log("⚡ Large signature → compressing...");
+
+                  // 🔥 COMPRESS FUNCTION
+                  const compressSignature = async (file: File) => {
+                    let quality = 0.9;
+                    let compressed = file;
+                    let attempts = 0;
+
+                    while (
+                      compressed.size > maxSize &&
+                      quality > 0.4 &&
+                      attempts < 6
+                    ) {
+                      const options = {
+                        maxSizeMB: 0.5,
+                        maxWidthOrHeight: 800,
+                        initialQuality: quality,
+                        useWebWorker: true,
+                      };
+
+                      compressed = await imageCompression(compressed, options);
+                      quality -= 0.1;
+                      attempts++;
+                    }
+
+                    return compressed;
+                  };
+
+                  try {
+                    const compressedFile = await compressSignature(file);
+
+                    console.log(
+                      "✅ Compressed size:",
+                      compressedFile.size / 1024,
+                      "KB",
+                    );
+
+                    setFile(compressedFile);
+                    setSignatureUrl(URL.createObjectURL(compressedFile)); // 🔥 ADD THIS
+                  } catch (err) {
+                    console.error("❌ Compression error", err);
+                    alert("Compression failed");
+                  }
                 }}
                 className="mb-3"
               />
-
-              <p className="text-xs text-gray-400">
-                Max size: 200KB • Recommended: Transparent PNG • Format: PNG,
-                JPG
-              </p>
             </div>
 
             <button
