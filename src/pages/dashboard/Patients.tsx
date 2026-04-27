@@ -65,10 +65,16 @@ const Patients = () => {
 
     fetchDoctors();
   }, []);
-  const downloadExcel = () => {
-    if (!patients.length) return;
+  const downloadExcel = async () => {
+  try {
+    // 🔥 ALL DATA FETCH (limit बड़ा रखो)
+    const res = await getPatients(1, 10000, search, doctor);
 
-    const data = patients.map((p) => ({
+    const allPatients = res.data || [];
+
+    if (!allPatients.length) return;
+
+    const data = allPatients.map((p) => ({
       ID: p.id,
       Name: p.name,
       Phone: p.phone,
@@ -94,7 +100,11 @@ const Patients = () => {
     });
 
     saveAs(fileData, "Patients.xlsx");
-  };
+
+  } catch (err) {
+    console.error("Excel download error:", err);
+  }
+};
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
 
