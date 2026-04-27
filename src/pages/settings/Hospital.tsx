@@ -1,5 +1,5 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-
+import imageCompression from "browser-image-compression";
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { getHospital, saveHospital } from "../../services/setting.service";
@@ -44,9 +44,8 @@ const Hospital = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleFile = (e: any) => {
+  const handleFile = async (e: any) => {
     const file = e.target.files[0];
-
     if (!file) return;
 
     // 🔥 TYPE CHECK
@@ -55,18 +54,56 @@ const Hospital = () => {
       return;
     }
 
-    // 🔥 SIZE CHECK (1MB)
-    const maxSize = 1 * 1024 * 1024;
+    console.log("📦 Original size:", file.size / 1024, "KB");
 
-    if (file.size > maxSize) {
-      alert("❌ Image size should be less than 1MB");
+    const maxSize = 400 * 1024; // 🔥 400KB RULE
+
+    // ✅ SMALL FILE → NO COMPRESSION
+    if (file.size <= maxSize) {
+      console.log("✅ Under 400KB → no compression");
+
+      setLogo(file);
+      const url = URL.createObjectURL(file);
+      setPreview(url);
       return;
     }
 
-    setLogo(file);
-    setPreview(URL.createObjectURL(file));
-  };
+    console.log("⚡ Large image → compressing...");
 
+    // 🔥 COMPRESS FUNCTION
+    const compressImage = async (file: File) => {
+      let quality = 0.9;
+      let compressed = file;
+      let attempts = 0;
+
+      while (compressed.size > maxSize && quality > 0.4 && attempts < 6) {
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          initialQuality: quality,
+          useWebWorker: true,
+        };
+
+        compressed = await imageCompression(compressed, options);
+        quality -= 0.1;
+        attempts++;
+      }
+
+      return compressed;
+    };
+
+    try {
+      const compressedFile = await compressImage(file);
+
+      console.log("✅ Compressed size:", compressedFile.size / 1024, "KB");
+
+      setLogo(compressedFile);
+      setPreview(URL.createObjectURL(compressedFile));
+    } catch (err) {
+      console.error("❌ Compression error", err);
+      alert("Compression failed");
+    }
+  };
   const handleSave = async () => {
     try {
       setLoading(true);
@@ -227,9 +264,6 @@ const Hospital = () => {
                 className="text-sm"
               />
             </div>
-            <p className="text-xs text-gray-500 text-center">
-              Max size: 1MB • Recommended: 200x200px • Format: JPG, PNG
-            </p>
           </div>
         </div>
       </div>
