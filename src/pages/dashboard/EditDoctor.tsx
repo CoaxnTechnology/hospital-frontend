@@ -360,20 +360,48 @@ const EditDoctor = () => {
                     return;
                   }
 
-                  // 🔥 COMPRESSION OPTIONS
-                  const options = {
-                    maxSizeMB: 0.7, // 300 KB
-                    maxWidthOrHeight: 800, // resize
-                    useWebWorker: true,
+                  console.log("📦 Original size:", file.size / 1024, "KB");
+
+                  // ✅ 400KB RULE
+                  if (file.size <= 400 * 1024) {
+                    console.log("✅ Under 400KB → no compression");
+
+                    const previewUrl = URL.createObjectURL(file);
+                    setPreview(previewUrl);
+                    setImageFile(file);
+                    return;
+                  }
+
+                  console.log("⚡ Large image → compressing...");
+
+                  // 🔥 SAME LOGIC AS ADD DOCTOR
+                  const compressImageToTarget = async (file: File) => {
+                    let quality = 0.9;
+                    let compressed = file;
+                    let attempts = 0; // 🔥 ADD THIS
+
+                    while (
+                      compressed.size > 400 * 1024 &&
+                      quality > 0.4 &&
+                      attempts < 6 // 🔥 ADD LIMIT
+                    ) {
+                      const options = {
+                        maxSizeMB: 1,
+                        maxWidthOrHeight: 1200,
+                        initialQuality: quality,
+                        useWebWorker: true,
+                      };
+
+                      compressed = await imageCompression(compressed, options);
+                      quality -= 0.1;
+                      attempts++; // 🔥 IMPORTANT
+                    }
+
+                    return compressed;
                   };
 
                   try {
-                    console.log("📦 Original size:", file.size / 1024, "KB");
-
-                    const compressedFile = await imageCompression(
-                      file,
-                      options,
-                    );
+                    const compressedFile = await compressImageToTarget(file);
 
                     console.log(
                       "✅ Compressed size:",
@@ -385,6 +413,7 @@ const EditDoctor = () => {
                     setImageFile(compressedFile);
                   } catch (err) {
                     console.error("❌ Compression error", err);
+                    alert("Image compression failed");
                   }
                 }}
               />
