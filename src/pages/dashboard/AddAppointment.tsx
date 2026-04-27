@@ -134,14 +134,16 @@ const AddAppointment = () => {
 
       const data = await res.json();
 
-      if (data.success) {
+      console.log("🔥 PATIENT DATA:", data);
+
+      if (data.success && data.data) {
         const patient = data.data;
 
         setForm((prev) => ({
           ...prev,
-          patient_id: patient.id,
-          patient_name: patient.name,
-          phone: patient.phone,
+          patient_id: patient.id || "",
+          patient_name: patient.name || "",
+          phone: patient.phone || "",
           doctor_id: patient.last_doctor_id || "",
           department: patient.last_department || "",
           gender: patient.gender || "",
@@ -149,7 +151,7 @@ const AddAppointment = () => {
         }));
       }
     } catch (err) {
-      console.error(err);
+      console.error("❌ PATIENT LOAD ERROR:", err);
     }
   };
 
@@ -311,8 +313,14 @@ const AddAppointment = () => {
             type="number"
             placeholder="Patient ID"
             onChange={(e) => {
-              setForm({ ...form, patient_id: e.target.value });
-              loadPatientById(e.target.value);
+              const id = e.target.value;
+
+              setForm((prev) => ({
+                ...prev,
+                patient_id: id,
+              }));
+
+              loadPatientById(id); // 🔥 safe call
             }}
             className="input"
           />
