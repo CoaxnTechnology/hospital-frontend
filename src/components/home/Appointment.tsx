@@ -1,4 +1,4 @@
- const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 import { useEffect, useState, useRef } from "react";
 import { getDoctors } from "../../services/doctor.service";
@@ -95,17 +95,16 @@ const Appointment = ({ data }: any) => {
     }
   };
   useEffect(() => {
-  if (!data || doctors.length === 0) return;
+    if (!data || doctors.length === 0) return;
 
-  console.log("📥 Prefill doctor:", data);
+    console.log("📥 Prefill doctor:", data);
 
-  setForm((prev) => ({
-    ...prev,
-    doctor: String(data.id),
-    department: data.department || "",
-  }));
-}, [data, doctors]);
-
+    setForm((prev) => ({
+      ...prev,
+      doctor: String(data.id),
+      department: data.department || "",
+    }));
+  }, [data, doctors]);
 
   const handleChange = (key: string, value: any) => {
     // 🔥 DATE FIX
@@ -146,6 +145,17 @@ const Appointment = ({ data }: any) => {
       ...prev,
       [key]: value,
     }));
+  };
+  const validateForm = () => {
+    if (!form.name.trim()) return "Enter name";
+    if (!form.phone || form.phone.length !== 10) return "Enter valid phone";
+    if (!form.gender) return "Select gender";
+    if (!form.age) return "Enter age";
+    if (!form.doctor) return "Select doctor";
+    if (!form.date) return "Select date";
+    if (!form.time) return "Select time slot";
+
+    return null;
   };
 
   const getToday = () => {
@@ -196,6 +206,13 @@ const Appointment = ({ data }: any) => {
     loadSlots(Number(form.doctor), form.date);
   }, [form.doctor, form.date]);
   const sendOtp = async () => {
+    const error = validateForm();
+
+    if (error) {
+      alert(error);
+      return;
+    }
+
     try {
       setBookingLoading(true);
 
@@ -214,7 +231,7 @@ const Appointment = ({ data }: any) => {
       window.confirmationResult = confirmation;
 
       setOtpSent(true);
-      setTimer(30); // 🔥 start timer
+      setTimer(30);
       setCanResend(false);
 
       setOtpMessage(`✅ OTP sent to +91 ${form.phone}`);
@@ -471,7 +488,7 @@ const Appointment = ({ data }: any) => {
             <button
               type="button"
               onClick={sendOtp}
-              disabled={bookingLoading}
+              disabled={bookingLoading || !!validateForm()}
               className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white py-2 rounded-xl font-medium disabled:opacity-50"
             >
               {bookingLoading
