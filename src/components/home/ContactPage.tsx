@@ -92,7 +92,7 @@ const ContactPage = () => {
     <>
       <Navbar />
 
-      <div className="bg-gray-50 min-h-screen py-16">
+      <div className="bg-gray-50 py-10">
         <div className="max-w-7xl mx-auto px-4">
           {/* HEADER */}
           <div className="text-center mb-12">
@@ -104,9 +104,9 @@ const ContactPage = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-10">
+          <div className="grid lg:grid-cols-2 gap-10 items-start">
             {/* 🔥 FORM */}
-            <div className="bg-white p-6 md:p-10 rounded-2xl shadow-md">
+            <div className="bg-white p-5 md:p-6 rounded-2xl shadow-md">
               <h2 className="text-xl md:text-2xl font-semibold mb-6">
                 Send Message
               </h2>
