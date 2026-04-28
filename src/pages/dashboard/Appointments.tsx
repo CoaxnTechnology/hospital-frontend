@@ -252,13 +252,15 @@ const Appointments = () => {
                         </td>
                         <td className="px-4 py-3 text-right flex justify-end gap-2">
                           {/* ⬇️ DOWNLOAD */}
-                          <a
-                            href={`/prescription/download/${a.id}`}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
-                            title="Download Prescription"
-                          >
-                            <i className="fa fa-download"></i>
-                          </a>
+                          {a.status === "Completed" && (
+                            <a
+                              href={`/prescription/download/${a.id}`}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
+                              title="Download Prescription"
+                            >
+                              <i className="fa fa-download"></i>
+                            </a>
+                          )}
 
                           {/* 🔄 RECALL */}
                           {a.status === "Skipped" && isToday(a.date) && (
@@ -345,13 +347,15 @@ const Appointments = () => {
                       </a>
 
                       {/* DOWNLOAD */}
-                      <a
-                        href={`/prescription/download/${a.id}`}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-green-50 text-green-600 text-sm font-medium"
-                      >
-                        <i className="fa fa-download"></i>
-                        Download
-                      </a>
+                      {a.status === "Completed" && (
+                        <a
+                          href={`/prescription/download/${a.id}`}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-green-50 text-green-600 text-sm font-medium"
+                        >
+                          <i className="fa fa-download"></i>
+                          Download
+                        </a>
+                      )}
 
                       {/* RECALL */}
                       {a.status === "Skipped" && isToday(a.date) && (
