@@ -66,45 +66,44 @@ const Patients = () => {
     fetchDoctors();
   }, []);
   const downloadExcel = async () => {
-  try {
-    // 🔥 ALL DATA FETCH (limit बड़ा रखो)
-    const res = await getPatients(1, 10000, search, doctor);
+    try {
+      // 🔥 ALL DATA FETCH (limit बड़ा रखो)
+      const res = await getPatients(1, 10000, search, doctor);
 
-    const allPatients = res.data || [];
+      const allPatients = res.data || [];
 
-    if (!allPatients.length) return;
+      if (!allPatients.length) return;
 
-    const data = allPatients.map((p) => ({
-      ID: p.id,
-      Name: p.name,
-      Phone: p.phone,
-      Gender: p.gender,
-      Age: p.age,
-      Doctor: p.doctor_name || "-",
-      Visits: p.total_visits,
-      "Last Visit": p.last_visit ? formatDate(p.last_visit) : "-",
-    }));
+      const data = allPatients.map((p) => ({
+        ID: p.id,
+        Name: p.name,
+        Phone: p.phone,
+        Gender: p.gender,
+        Age: p.age,
+        Doctor: p.doctor_name || "-",
+        Visits: p.total_visits,
+        "Last Visit": p.last_visit ? formatDate(p.last_visit) : "-",
+      }));
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Patients");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
 
-    const fileData = new Blob([excelBuffer], {
-      type: "application/octet-stream",
-    });
+      const fileData = new Blob([excelBuffer], {
+        type: "application/octet-stream",
+      });
 
-    saveAs(fileData, "Patients.xlsx");
-
-  } catch (err) {
-    console.error("Excel download error:", err);
-  }
-};
+      saveAs(fileData, "Patients.xlsx");
+    } catch (err) {
+      console.error("Excel download error:", err);
+    }
+  };
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
 
@@ -155,7 +154,6 @@ const Patients = () => {
           <h2 className="text-2xl font-semibold text-gray-800">Patients</h2>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
             <button
               onClick={downloadExcel}
               className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm"
@@ -207,7 +205,7 @@ const Patients = () => {
                   key={doc.id}
                   value={`${doc.first_name} ${doc.last_name}`}
                 >
-                  Dr. {doc.first_name} {doc.last_name}
+                  {doc.first_name} {doc.last_name}
                 </option>
               ))}
             </select>
