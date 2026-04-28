@@ -54,7 +54,7 @@ const Appointments = () => {
 
     const interval = setInterval(() => {
       fetchData(page, search);
-    }, 3600000);
+    }, 600000); // 👈 10 minutes
 
     return () => clearInterval(interval);
   }, [filter, customDate, page, search]);
