@@ -1,5 +1,4 @@
-const BASE_URL = "http://localhost:5000";
-//const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_BASE_URL
 import { useState, useEffect } from "react";
 import Navbar from "../layout/Navbar";
 import Footer from "../layout/Footer";
