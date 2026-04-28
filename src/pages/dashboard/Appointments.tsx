@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { getAppointmentsPaginated } from "../../services/appointment.Service";
-
+import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
+import { useHospital } from "../../context/HospitalContext";
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 type Appointment = {
   id: number;
   token_number: number;
@@ -13,6 +15,7 @@ type Appointment = {
   email: string;
   phone: string;
   status: "Pending" | "In Consultation" | "Completed" | "Skipped";
+  prescription_id?: number;
 };
 
 const Appointments = () => {
@@ -25,7 +28,7 @@ const Appointments = () => {
   const [totalPages, setTotalPages] = useState(1);
 
   const [searchInput, setSearchInput] = useState("");
-
+  const { hospital } = useHospital();
   const fetchData = async (customPage = page, customSearch = search) => {
     setLoading(true);
     try {
@@ -99,6 +102,54 @@ const Appointments = () => {
     if (h === 0) h = 12;
 
     return `${h}:${minute} ${ampm}`;
+  };
+  const handlePrintPrescription = async (prescriptionId: number) => {
+    try {
+      if (!hospital) return alert("Hospital not loaded");
+
+      const res = await fetch(`${BASE_URL}/api/prescription/${prescriptionId}`);
+      const data = await res.json();
+
+      const rows = data.data;
+
+      if (!rows || rows.length === 0) {
+        return alert("No prescription data");
+      }
+
+      const first = rows[0];
+
+      const html = generatePrescriptionHTML({
+        hospital,
+        prescriptionId,
+        patient: {
+          id: first.patient_id,
+          name: first.patient_name,
+          age: first.age,
+          mobile: first.mobile,
+        },
+        doctor: {
+          name: first.doctor_name,
+          department: first.department,
+        },
+        medicines: rows.map((r: any) => ({
+          name: r.medicine_name,
+          dosage: r.dosage,
+          duration: r.duration,
+        })),
+        date: new Date().toLocaleDateString(),
+      });
+
+      const win = window.open("", "_blank");
+      win.document.write(html);
+      win.document.close();
+
+      setTimeout(() => {
+        win.print();
+      }, 300);
+    } catch (err) {
+      console.error(err);
+      alert("Print error");
+    }
   };
   return (
     <DashboardLayout>
@@ -252,14 +303,16 @@ const Appointments = () => {
                         </td>
                         <td className="px-4 py-3 text-right flex justify-end gap-2">
                           {/* ⬇️ DOWNLOAD */}
-                          {a.status === "Completed" && (
-                            <a
-                              href={`/prescription/download/${a.id}`}
+                          {a.status === "Completed" && a.prescription_id && (
+                            <button
+                              onClick={() =>
+                                handlePrintPrescription(a.prescription_id!)
+                              }
                               className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-green-50 text-gray-600 hover:text-green-600 transition"
-                              title="Download Prescription"
+                              title="Print / Download Prescription"
                             >
                               <i className="fa fa-download"></i>
-                            </a>
+                            </button>
                           )}
 
                           {/* 🔄 RECALL */}

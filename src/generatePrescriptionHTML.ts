@@ -194,7 +194,7 @@ export const generatePrescriptionHTML = (data: any) => {
       <div class="patient-box">
         <div class="row">
           <div><b>Patient:</b> ${patient?.name || "N/A"}</div>
-          <div><b>ID:</b> ${patient?.id || "N/A"}</div>
+          <div><b>PATIENT-ID:</b> ${patient?.id || "N/A"}</div>
         </div>
 
         <div class="row">

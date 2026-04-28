@@ -1,4 +1,4 @@
- const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -324,9 +324,6 @@ const Prescription = () => {
             </div>
 
             <div className="text-sm text-right">
-              <p>
-                <strong>Prescription ID:</strong> #{prescriptionId || "New"}
-              </p>
               <p>
                 <strong>Date:</strong> {new Date().toLocaleDateString()}
               </p>
