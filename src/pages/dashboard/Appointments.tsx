@@ -12,7 +12,7 @@ type Appointment = {
   time: string;
   email: string;
   phone: string;
-  status: "Pending" | "In Consultation" | "Completed";
+  status: "Pending" | "In Consultation" | "Completed" | "Skipped";
 };
 
 const Appointments = () => {
@@ -62,6 +62,16 @@ const Appointments = () => {
       month: "short",
       year: "numeric",
     });
+  };
+  const isToday = (dateStr: string) => {
+    const today = new Date();
+    const d = new Date(dateStr);
+
+    return (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate()
+    );
   };
   const getStatusStyle = (status: string) => {
     const s = status?.toLowerCase();
@@ -251,13 +261,15 @@ const Appointments = () => {
                           </a>
 
                           {/* 🔄 RECALL */}
-                          <button
-                            //onClick={() => handleRecall(a.id)}
-                            className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-yellow-50 text-gray-600 hover:text-yellow-600 transition"
-                            title="Recall Patient"
-                          >
-                            <i className="fa fa-refresh"></i>
-                          </button>
+                          {a.status === "Skipped" && isToday(a.date) && (
+                            <button
+                              // onClick={() => handleRecall(a.id)}
+                              className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-yellow-50 text-gray-600 hover:text-yellow-600 transition"
+                              title="Recall Patient"
+                            >
+                              <i className="fa fa-refresh"></i>
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -342,14 +354,15 @@ const Appointments = () => {
                       </a>
 
                       {/* RECALL */}
-                      <button
-                        // onClick={() => handleRecall(a.id)}
-                        disabled={a.status === "Completed"}
-                        className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-yellow-50 text-yellow-600 text-sm font-medium disabled:opacity-50"
-                      >
-                        <i className="fa fa-refresh"></i>
-                        Recall
-                      </button>
+                      {a.status === "Skipped" && isToday(a.date) && (
+                        <button
+                          // onClick={() => handleRecall(a.id)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-yellow-50 text-yellow-600 text-sm font-medium"
+                        >
+                          <i className="fa fa-refresh"></i>
+                          Recall
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
