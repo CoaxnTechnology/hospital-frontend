@@ -23,8 +23,16 @@ const Signature = () => {
 
       console.log("🖊 SIGNATURE API:", res);
 
+      // 🔥 ADD THIS LINE
+      console.log("📷 RAW SIGNATURE PATH:", res?.data?.signature);
+
       if (res?.data?.signature) {
-        setSignatureUrl(`${BASE_URL}${res.data.signature}`);
+        const fullUrl = `${BASE_URL}${res.data.signature}`;
+
+        // 🔥 ADD THIS LINE
+        console.log("🌐 FINAL IMAGE URL:", fullUrl);
+
+        setSignatureUrl(fullUrl);
       }
     } catch (err) {
       console.error(err);
@@ -133,7 +141,7 @@ const Signature = () => {
         </div>
 
         {/* GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* DRAW CARD */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border space-y-4">
             <div className="flex justify-between items-center">
@@ -195,7 +203,7 @@ const Signature = () => {
                   if (file.size <= maxSize) {
                     console.log("✅ Under 200KB → no compression");
                     setFile(file);
-                     setSignatureUrl(URL.createObjectURL(file));
+                    setSignatureUrl(URL.createObjectURL(file));
                     return;
                   }
 
@@ -264,6 +272,10 @@ const Signature = () => {
               <img
                 src={signatureUrl}
                 alt="signature"
+                onError={() =>
+                  console.log("❌ IMAGE LOAD FAILED:", signatureUrl)
+                }
+                onLoad={() => console.log("✅ IMAGE LOADED:", signatureUrl)}
                 className="h-20 mx-auto object-contain border p-2 rounded"
               />
             </div>
