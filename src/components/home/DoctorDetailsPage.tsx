@@ -140,11 +140,14 @@ const DoctorDetailsPage = () => {
             {/* BUTTON */}
             <button
               onClick={() =>
-                navigate("/#appointment", {
+                navigate("/", {
                   state: {
-                    doctorId: doctor.id,
-                    doctorName: `${doctor.first_name} ${doctor.last_name}`,
-                    department: doctor.department,
+                    openAppointment: true,
+                    doctor: {
+                      id: doctor.id,
+                      name: `${doctor.first_name} ${doctor.last_name}`,
+                      department: doctor.department,
+                    },
                   },
                 })
               }

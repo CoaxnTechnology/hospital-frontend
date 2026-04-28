@@ -10,7 +10,7 @@ declare global {
     grecaptcha: any;
   }
 }
-const Appointment = () => {
+const Appointment = ({ data }: any) => {
   const [doctors, setDoctors] = useState<any[]>([]);
   const [slots, setSlots] = useState<any[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
@@ -94,22 +94,18 @@ const Appointment = () => {
       setLoadingPage(false);
     }
   };
-
   useEffect(() => {
-    if (!location.state || doctors.length === 0) return;
+  if (!data || doctors.length === 0) return;
 
-    const { doctorId, department } = location.state as any;
+  console.log("📥 Prefill doctor:", data);
 
-    if (doctorId) {
-      setForm((prev) => ({
-        ...prev,
-        doctor: String(doctorId),
-        department: department || "",
-      }));
+  setForm((prev) => ({
+    ...prev,
+    doctor: String(data.id),
+    department: data.department || "",
+  }));
+}, [data, doctors]);
 
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.state, doctors]);
 
   const handleChange = (key: string, value: any) => {
     // 🔥 DATE FIX

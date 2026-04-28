@@ -13,8 +13,19 @@ import { useLocation } from "react-router-dom";
 const Home = () => {
   const location = useLocation();
 
-  // 🔥 MODAL STATE
+  // 🔥 NEW STATE (IMPORTANT)
   const [openAppointment, setOpenAppointment] = useState(false);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
+
+  // 🔥 RECEIVE DATA FROM DOCTOR PAGE
+  useEffect(() => {
+    if (location.state?.openAppointment) {
+      console.log("📥 Received doctor data:", location.state.doctor);
+
+      setAppointmentData(location.state.doctor);
+      setOpenAppointment(true);
+    }
+  }, [location.state]);
 
   // 🔥 SCROLL HANDLER
   useEffect(() => {
@@ -58,7 +69,12 @@ const Home = () => {
 
       {/* ✅ HERO */}
       <div id="home">
-        <Hero onAppointmentClick={() => setOpenAppointment(true)} />
+        <Hero
+          onAppointmentClick={() => {
+            setAppointmentData(null); // normal open
+            setOpenAppointment(true);
+          }}
+        />
       </div>
 
       {/* ✅ SPECIALITIES */}
@@ -70,8 +86,6 @@ const Home = () => {
       <div id="doctors">
         <Doctors />
       </div>
-
-      {/* ❌ REMOVED OLD APPOINTMENT */}
 
       {/* ✅ SERVICES */}
       <div id="services">
@@ -88,12 +102,12 @@ const Home = () => {
       {/* 🔥 APPOINTMENT MODAL */}
       {openAppointment && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-          onClick={() => setOpenAppointment(false)} // 👈 outside click close
+          className="fixed inset-0 backdrop-blur-sm bg-black/20 flex items-center justify-center z-50"
+          onClick={() => setOpenAppointment(false)}
         >
           <div
             className="bg-white w-full max-w-2xl rounded-lg shadow-lg p-6 relative animate-scaleIn"
-            onClick={(e) => e.stopPropagation()} // 👈 prevent close on inside click
+            onClick={(e) => e.stopPropagation()}
           >
             {/* ❌ CLOSE BUTTON */}
             <button
@@ -103,8 +117,8 @@ const Home = () => {
               ✖
             </button>
 
-            {/* 🧾 APPOINTMENT FORM */}
-            <Appointment />
+            {/* 🧾 APPOINTMENT FORM (DATA PASS) */}
+            <Appointment data={appointmentData} />
           </div>
         </div>
       )}
