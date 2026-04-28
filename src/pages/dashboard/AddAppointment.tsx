@@ -176,15 +176,22 @@ const AddAppointment = () => {
       );
     }
   };
-  const sendOtp = async () => {
-    // 🔥 validation add करो
-    if (!form.patient_name || !form.phone) {
-      alert("Enter name & phone");
-      return;
-    }
+  const validateForm = () => {
+    if (!form.patient_name.trim()) return "Enter patient name";
+    if (!form.phone || form.phone.length !== 10) return "Enter valid phone";
+    if (!form.gender) return "Select gender";
+    if (!form.age) return "Enter age";
+    if (!form.doctor_id) return "Select doctor";
+    if (!form.date) return "Select date";
+    if (!form.time) return "Select time slot";
 
-    if (!form.doctor_id || !form.date || !form.time) {
-      alert("Select doctor, date & slot");
+    return null;
+  };
+  const sendOtp = async () => {
+    const error = validateForm();
+
+    if (error) {
+      alert(error);
       return;
     }
 
@@ -448,7 +455,7 @@ const AddAppointment = () => {
           <button
             type="button"
             onClick={sendOtp}
-            disabled={bookingLoading}
+            disabled={bookingLoading || !!validateForm()}
             className="col-span-2 bg-blue-600 text-white py-3 rounded-xl disabled:opacity-50"
           >
             {bookingLoading
