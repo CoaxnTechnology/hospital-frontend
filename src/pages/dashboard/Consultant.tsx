@@ -1,4 +1,4 @@
- const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = import.meta.env.VITE_BASE_URL;
 
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -152,6 +152,19 @@ const Consultant = () => {
       year: "numeric",
     });
   };
+  const formatTime = (time: string) => {
+    if (!time) return "";
+
+    const [hour, minute] = time.split(":");
+    let h = parseInt(hour);
+
+    const ampm = h >= 12 ? "PM" : "AM";
+
+    h = h % 12;
+    if (h === 0) h = 12;
+
+    return `${h}:${minute} ${ampm}`;
+  };
 
   const PageSkeletonLoader = () => (
     <div className="space-y-6 p-6">
@@ -295,8 +308,7 @@ const Consultant = () => {
 
                         <td className="px-4 py-3">{formatDate(a.date)}</td>
 
-                        <td className="px-4 py-3">{a.time}</td>
-
+                        <td className="px-4 py-3">{formatTime(a.time)}</td>
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
