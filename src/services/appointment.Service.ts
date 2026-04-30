@@ -1,5 +1,4 @@
-// const BASE_URL =import.meta.env.VITE_BASE_URL
-const BASE_URL = "http://localhost:5000"; // 👈 TEMP for development, replace with env variable in production
+ const BASE_URL =import.meta.env.VITE_BASE_URL
 console.log("🌐 BASE_URL:", BASE_URL);
 const API_URL = `${BASE_URL}/api/appointments`;
 const getToken = () => {

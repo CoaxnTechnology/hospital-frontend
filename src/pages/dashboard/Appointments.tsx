@@ -6,8 +6,7 @@ import {
 } from "../../services/appointment.Service";
 import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
 import { useHospital } from "../../context/HospitalContext";
-// const BASE_URL = import.meta.env.VITE_BASE_URL;
-const BASE_URL = "http://localhost:5000"; // 👈 TEMP for development, replace with env variable in production
+ const BASE_URL = import.meta.env.VITE_BASE_URL;
 type Appointment = {
   id: number;
   token_number: number;
