@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
 import { createSale } from "../../services/medicinesell.service";
 import { generateBillHTML } from "../../generateBillHTML";
 import { useHospital } from "../../context/HospitalContext";
+import { getMedicines } from "../../services/medicine.Service";
+
 import axios from "axios";
 import {
   Search,
@@ -23,6 +25,8 @@ const DispensePage = () => {
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [editedQty, setEditedQty] = useState<{ [key: number]: number }>({});
+  const [extraMeds, setExtraMeds] = useState<any[]>([]);
+  const [allMedicines, setAllMedicines] = useState<any[]>([]);
   /* ======================
      FETCH PRESCRIPTION
   ====================== */
@@ -48,7 +52,15 @@ const DispensePage = () => {
       setLoading(false);
     }
   };
+  useEffect(() => {
+    const loadMedicines = async () => {
+      const res = await getMedicines();
+      console.log("Medicines from service:", res);
+      setAllMedicines(res.data || []);
+    };
 
+    loadMedicines();
+  }, []);
   /* ======================
      FIXED QTY CALCULATION
   ====================== */
@@ -68,8 +80,9 @@ const DispensePage = () => {
   /* ======================
      PREPARE ITEMS
   ====================== */
+  const allData = [...data, ...extraMeds];
 
-  const items = data.map((item, index) => {
+  const items = allData.map((item, index) => {
     const defaultQty = calculateQty(item.dosage, item.duration);
     const qty = editedQty[index] ?? defaultQty;
     const stock = Number(item.stock || 0); // ✅ add this
@@ -99,44 +112,45 @@ const DispensePage = () => {
   /* ======================
      GENERATE BILL
   ====================== */
-  if (!hospital) {
-    alert("Hospital data not loaded");
-    return;
-  }
+
   const generateBill = async () => {
-    console.log("Starting generateBill");
+    if (!hospital) {
+      return alert("Please wait, hospital loading...");
+    }
+
     setGenerating(true);
-    console.log("Set generating to true");
 
     try {
-      console.log("Entering try block");
+      // ❌ qty 0 check (optional strict)
       if (items.some((item) => item.qty === 0)) {
-        console.log("Some item has qty 0");
         setGenerating(false);
-        console.log("Set generating to false");
         return alert("Quantity cannot be 0");
       }
 
-      // 🔥 1. SAVE SALE
-      console.log("Saving sale");
-      const res = await createSale({
-        prescription_no: Number(prescriptionId),
-        discount,
-        items: items.map((item) => ({
-          medicine_id: item.medicine_id,
-          name: item.medicine_name, // ✅ ADD THIS
+      // ✅ FINAL ITEMS (IMPORTANT - yahi fix hai)
+      const finalItems = items
+        .filter((item) => item.qty > 0)
+        .map((item) => ({
+          medicine_id: item.medicine_id || item.id,
+          name: item.medicine_name,
           qty: item.qty,
           price: item.price,
           gst: item.gstPercent,
-        })),
+          total: item.final,
+        }));
+
+      console.log("FINAL ITEMS:", finalItems);
+
+      // 🔥 1. SAVE SALE
+      const res = await createSale({
+        prescription_no: Number(prescriptionId),
+        discount,
+        items: finalItems,
       });
-      console.log("Sale saved, res:", res);
 
       const invoice = res.invoice_number;
-      console.log("Invoice number:", invoice);
 
       // 🔥 2. PREPARE BILL DATA
-      console.log("Preparing bill data");
       const billData = {
         hospital: {
           name: hospital.name,
@@ -150,13 +164,7 @@ const DispensePage = () => {
         doctor: {
           name: data[0]?.doctor_name,
         },
-        items: items.map((i) => ({
-          name: i.medicine_name,
-          qty: i.qty,
-          price: i.price,
-          gst: i.gstPercent,
-          total: i.final,
-        })),
+        items: finalItems, // ✅ SAME DATA
         summary: {
           subtotal,
           gst: totalGst,
@@ -164,46 +172,44 @@ const DispensePage = () => {
         },
         invoice,
       };
-      console.log("Bill data prepared:", billData);
 
       // 🔥 3. OPEN PRINT WINDOW
-      console.log("Opening print window");
       const printWindow = window.open("", "_blank");
-      console.log("Print window opened");
 
       printWindow.document.write(generateBillHTML(billData));
-      console.log("Wrote to print window");
       printWindow.document.close();
-      console.log("Closed print window document");
 
       // 🔥 4. PRINT
-      console.log("Printing");
       printWindow.print();
-      console.log("Print called");
 
       // 🔥 5. AUTO CLOSE
-      console.log("Setting onafterprint");
       printWindow.onafterprint = () => printWindow.close();
-      console.log("Set onafterprint");
 
       alert("Bill Generated & Printed Successfully");
-      console.log("Alert shown");
 
       // 🔥 RESET
-      console.log("Resetting data");
       setData([]);
+      setExtraMeds([]); // ✅ important (extra clear)
       setPrescriptionId("");
       setDiscount(0);
       setEditedQty({});
-      console.log("Data reset");
-    } catch (err: any) {
-      console.log("Error in generateBill:", err);
+    } catch (err) {
       console.error(err);
       alert("Error generating bill");
     } finally {
-      console.log("Finally block");
       setGenerating(false);
-      console.log("Set generating to false");
+    }
+  };
+  const handleRemoveMedicine = (index: number) => {
+    if (index < data.length) {
+      const updated = [...data];
+      updated.splice(index, 1);
+      setData(updated);
+    } else {
+      const extraIndex = index - data.length;
+      const updated = [...extraMeds];
+      updated.splice(extraIndex, 1);
+      setExtraMeds(updated);
     }
   };
   return (
@@ -299,6 +305,39 @@ const DispensePage = () => {
               </div>
             </div>
           )}
+          <div className="p-4 flex gap-3">
+            <select
+              onChange={(e) => {
+                const selected = allMedicines.find(
+                  (m) => m.id === Number(e.target.value),
+                );
+
+                if (!selected) return;
+
+                setExtraMeds((prev) => [
+                  ...prev,
+                  {
+                    id: selected.id,
+                    medicine_id: selected.id,
+                    medicine_name: selected.name,
+                    selling_price: selected.selling_price,
+                    gst_percentage: selected.gst_percentage,
+                    stock: selected.stock,
+                    dosage: "1-0-1",
+                    duration: "5 days",
+                  },
+                ]);
+              }}
+              className="border px-3 py-2 rounded"
+            >
+              <option>Select Extra Medicine</option>
+              {allMedicines.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* MEDICINES TABLE */}
           {data.length > 0 && (
@@ -334,6 +373,9 @@ const DispensePage = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Total
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        Action
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -346,11 +388,39 @@ const DispensePage = () => {
                           {item.medicine_name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {item.dosage}
+                          <input
+                            value={item.dosage}
+                            onChange={(e) => {
+                              const updated = [...allData];
+                              updated[i].dosage = e.target.value;
+
+                              if (i < data.length) {
+                                setData(updated.slice(0, data.length));
+                              } else {
+                                setExtraMeds(updated.slice(data.length));
+                              }
+                            }}
+                            className="border px-2 py-1 rounded"
+                          />
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {String(item.duration).replace(/\D/g, "")} days
+                          <input
+                            value={item.duration}
+                            onChange={(e) => {
+                              const updated = [...allData];
+                              updated[i].duration = e.target.value;
+
+                              if (i < data.length) {
+                                setData(updated.slice(0, data.length));
+                              } else {
+                                setExtraMeds(updated.slice(data.length));
+                              }
+                            }}
+                            className="border px-2 py-1 rounded"
+                          />
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <input
                             type="number"
@@ -374,14 +444,36 @@ const DispensePage = () => {
                             className="w-20 border px-2 py-1 rounded text-center"
                           />
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           ₹{item.price.toFixed(2)}
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {item.gstPercent}%
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           ₹{item.final.toFixed(2)}
+                        </td>
+
+                        {/* 🔥 DELETE ICON ADD HERE */}
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
+                          <button
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Are you sure you want to remove this medicine?",
+                                )
+                              ) {
+                                handleRemoveMedicine(i);
+                              }
+                            }}
+                            className="text-red-500 hover:text-red-700"
+                            title="Remove Medicine"
+                          >
+                            🗑️
+                          </button>
                         </td>
                       </tr>
                     ))}

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
-import { getAppointmentsPaginated } from "../../services/appointment.Service";
+import {
+  getAppointmentsPaginated,
+  recallPatient,
+} from "../../services/appointment.Service";
 import { generatePrescriptionHTML } from "../../generatePrescriptionHTML";
 import { useHospital } from "../../context/HospitalContext";
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000"; // 👈 TEMP for development, replace with env variable in production
 type Appointment = {
   id: number;
   token_number: number;
@@ -30,7 +34,14 @@ const Appointments = () => {
   const [searchInput, setSearchInput] = useState("");
   const { hospital } = useHospital();
   const fetchData = async (customPage = page, customSearch = search) => {
+    console.log("📡 FETCH DATA CALLED");
+    console.log("➡️ page:", customPage);
+    console.log("➡️ search:", customSearch);
+    console.log("➡️ filter:", filter);
+    console.log("➡️ customDate:", customDate);
+
     setLoading(true);
+
     try {
       const res = await getAppointmentsPaginated(
         customPage,
@@ -40,23 +51,38 @@ const Appointments = () => {
         customSearch,
       );
 
+      console.log("📥 API RESPONSE:", res);
+
       setAppointments(res.data || []);
       setTotalPages(res.pagination?.totalPages || 1);
+
+      console.log("📊 APPOINTMENTS SET:", res.data);
     } catch (err) {
-      console.error(err);
+      console.error("❌ FETCH ERROR:", err);
       setAppointments([]);
     } finally {
       setLoading(false);
+      console.log("✅ FETCH COMPLETE");
     }
   };
   useEffect(() => {
+    console.log("🔄 useEffect TRIGGERED");
+    console.log("➡️ page:", page);
+    console.log("➡️ search:", search);
+    console.log("➡️ filter:", filter);
+    console.log("➡️ customDate:", customDate);
+
     fetchData(page, search);
 
     const interval = setInterval(() => {
+      console.log("⏱ AUTO REFRESH TRIGGERED");
       fetchData(page, search);
-    }, 600000); // 👈 10 minutes
+    }, 600000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log("🛑 CLEAR INTERVAL");
+      clearInterval(interval);
+    };
   }, [filter, customDate, page, search]);
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -149,6 +175,38 @@ const Appointments = () => {
     } catch (err) {
       console.error(err);
       alert("Print error");
+    }
+  };
+  const handleRecall = async (id: number) => {
+    try {
+      console.log("🔄 RECALL CLICKED:", id);
+
+      const confirm = window.confirm("Recall this patient?");
+      if (!confirm) {
+        console.log("❌ RECALL CANCELLED");
+        return;
+      }
+
+      console.log("📡 CALLING RECALL API...");
+
+      const res = await recallPatient(id);
+
+      console.log("📥 RECALL RESPONSE:", res);
+
+      if (res.success) {
+        console.log("✅ RECALL SUCCESS");
+
+        alert("Patient recalled successfully");
+
+        console.log("🔄 REFRESHING DATA AFTER RECALL");
+        fetchData(page, search);
+      } else {
+        console.log("❌ RECALL FAILED");
+        alert("Failed to recall patient");
+      }
+    } catch (err) {
+      console.error("❌ RECALL ERROR:", err);
+      alert("Error recalling patient");
     }
   };
   return (
@@ -318,7 +376,7 @@ const Appointments = () => {
                           {/* 🔄 RECALL */}
                           {a.status === "Skipped" && isToday(a.date) && (
                             <button
-                              // onClick={() => handleRecall(a.id)}
+                              onClick={() => handleRecall(a.id)}
                               className="w-9 h-9 flex items-center justify-center rounded-lg bg-white shadow hover:bg-yellow-50 text-gray-600 hover:text-yellow-600 transition"
                               title="Recall Patient"
                             >
@@ -413,7 +471,7 @@ const Appointments = () => {
                       {/* RECALL */}
                       {a.status === "Skipped" && isToday(a.date) && (
                         <button
-                          // onClick={() => handleRecall(a.id)}
+                          onClick={() => handleRecall(a.id)}
                           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg bg-yellow-50 text-yellow-600 text-sm font-medium"
                         >
                           <i className="fa fa-refresh"></i>

@@ -1,4 +1,6 @@
-const BASE_URL =import.meta.env.VITE_BASE_URL
+// const BASE_URL =import.meta.env.VITE_BASE_URL
+const BASE_URL = "http://localhost:5000"; // 👈 TEMP for development, replace with env variable in production
+console.log("🌐 BASE_URL:", BASE_URL);
 const API_URL = `${BASE_URL}/api/appointments`;
 const getToken = () => {
   const token = localStorage.getItem("token");
@@ -207,7 +209,7 @@ export const getAppointmentsPaginated = async (
   limit = 10,
   filter = "today",
   date?: string,
-  search = ""
+  search = "",
 ) => {
   let url = `${API_URL}/list?page=${page}&limit=${limit}&filter=${filter}&search=${encodeURIComponent(search)}`;
 
