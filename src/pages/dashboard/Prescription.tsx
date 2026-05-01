@@ -1,4 +1,5 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
+// const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -12,6 +13,9 @@ type MedicineRow = {
   name: string;
   dosage: string;
   duration: string;
+  timing?: string; // NEW
+  frequency?: string; // NEW
+  instruction?: string; // NEW
 };
 
 const Prescription = () => {
@@ -26,6 +30,9 @@ const Prescription = () => {
       name: "",
       dosage: "",
       duration: "",
+      timing: "", // NEW
+      frequency: "", // NEW
+      instruction: "", // NEW
       filteredMedicines: [],
       filteredDosage: [],
     },
@@ -36,6 +43,7 @@ const Prescription = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [patient, setPatient] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [diagnosis, setDiagnosis] = useState("");
   const [activeDosageIndex, setActiveDosageIndex] = useState<number | null>(
     null,
   );
@@ -62,6 +70,9 @@ const Prescription = () => {
         name: "",
         dosage: "",
         duration: "",
+        timing: "",
+        frequency: "",
+        instruction: "",
         filteredMedicines: [],
         filteredDosage: [],
       },
@@ -173,106 +184,79 @@ const Prescription = () => {
   /* ================= SAVE PRESCRIPTION ================= */
   const savePrescription = async () => {
     try {
+      console.log("🚀 SAVE PRESCRIPTION START");
+
+      // 🔥 CLEAN MEDICINES DATA
+      const cleanMedicines = rows
+        .filter((r) => r.name && r.dosage)
+        .map((r) => ({
+          name: r.name,
+          dosage: r.dosage,
+          duration: r.duration,
+          timing: r.timing,
+          frequency: r.frequency,
+          instruction: r.instruction,
+        }));
+
+      console.log("🧹 CLEAN MEDICINES:", cleanMedicines);
+
+      // 🔥 VALIDATION
+      if (!diagnosis) {
+        console.log("❌ Diagnosis missing");
+        return alert("Please enter diagnosis");
+      }
+
+      if (cleanMedicines.length === 0) {
+        console.log("❌ No medicines added");
+        return alert("Please add at least one medicine");
+      }
+
+      // 🔥 FINAL PAYLOAD
       const payload = {
         appointment_id: Number(id),
         doctor_id: patient?.doctor_id,
         patient_id: patient?.patient_id,
+        diagnosis,
         notes: "Take medicines as prescribed",
-        medicines: rows,
+        medicines: cleanMedicines,
       };
 
-      console.log("📤 PRESCRIPTION PAYLOAD:", payload);
+      console.log("📤 FINAL PAYLOAD:", payload);
+
+      // 🔍 DEBUG CHECK
       console.log(
-        "📁 CHECKING FOR FILE PATHS IN PAYLOAD:",
+        "📁 CHECK FILE/PATH:",
         JSON.stringify(payload).includes("file") ||
           JSON.stringify(payload).includes("path"),
       );
 
+      // 🔥 API CALL
+      console.log("📡 CALLING createPrescription API...");
       const res = await createPrescription(payload);
 
-      console.log("📥 PRESCRIPTION RESPONSE:", res);
-      console.log(
-        "📁 CHECKING FOR FILE PATHS IN RESPONSE:",
-        JSON.stringify(res).includes("file") ||
-          JSON.stringify(res).includes("path"),
-      );
+      console.log("📥 API RESPONSE:", res);
 
+      // 🔥 RESPONSE CHECK
       if (res.success) {
+        console.log("✅ PRESCRIPTION SAVED SUCCESSFULLY");
+        console.log("🧾 PRESCRIPTION ID:", res.prescriptionId);
+
         navigate("/consultant", {
           state: { prescriptionId: res.prescriptionId },
         });
       } else {
+        console.log("❌ SAVE FAILED RESPONSE:", res);
         alert("Failed to save prescription");
       }
     } catch (error) {
-      console.error("❌ Error saving prescription:", error);
+      console.error("❌ SAVE ERROR:", error);
       alert("Error saving prescription");
+    } finally {
+      console.log("🏁 SAVE PRESCRIPTION END");
     }
   };
 
   /* ================= PRINT ================= */
-  const handlePrint = () => {
-    console.log("🖨️ Starting print prescription...");
-    console.log("Hospital data:", hospital);
-    if (!hospital) {
-      console.error("❌ Hospital not loaded!");
-      alert("Hospital not loaded");
-      return;
-    }
-
-    console.log("🏥 Hospital loaded:", hospital.name);
-    console.log("👤 Patient data:", {
-      id: patient?.patient_id,
-      name: patient?.patient_name,
-    });
-    console.log("👨‍⚕️ Doctor data:", {
-      name: patient?.doctor_name,
-      department: patient?.department,
-    });
-    console.log("💊 Medicines:", rows);
-
-    const html = generatePrescriptionHTML({
-      hospital,
-      patient: {
-        id: patient?.patient_id,
-        name: patient?.patient_name,
-        age: patient?.age,
-        mobile: patient?.mobile,
-      },
-      doctor: {
-        name: patient?.doctor_name,
-        department: patient?.department,
-        signature: patient?.signature, // optional
-      },
-      medicines: rows,
-      date: new Date().toLocaleDateString(),
-    });
-
-    console.log("✅ HTML generated:", html.substring(0, 200) + "...");
-    console.log(
-      "📁 CHECKING FOR FILE PATHS IN HTML:",
-      html.includes("file") || html.includes("path") || html.includes(BASE_URL),
-    );
-
-    console.log("🪟 Opening new window for printing...");
-    const win = window.open("", "_blank");
-    console.log("✅ Window opened:", win);
-
-    console.log("📝 Writing HTML to window...");
-    win.document.write(html);
-    console.log("✅ HTML written");
-
-    console.log("🔒 Closing document...");
-    win.document.close();
-    console.log("✅ Document closed");
-
-    console.log("⏱️ Setting timeout for print (300ms)...");
-    setTimeout(() => {
-      console.log("🖨️ Printing prescription now...");
-      win.print();
-      console.log("✅ Print dialog opened");
-    }, 300);
-  };
 
   if (loading) {
     return (
@@ -352,34 +336,54 @@ const Prescription = () => {
               <strong>Appointment ID:</strong> {id}
             </p>
           </div>
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Diagnosis
+            </label>
 
-          {/* MEDICINE TABLE */}
-          <table className="w-full border text-sm">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border px-3 py-2">#</th>
-                <th className="border px-3 py-2">Medicine</th>
-                <th className="border px-3 py-2">Dosage</th>
-                <th className="border px-3 py-2">Duration</th>
-              </tr>
-            </thead>
+            <textarea
+              value={diagnosis}
+              onChange={(e) => setDiagnosis(e.target.value)}
+              placeholder="e.g. Viral Fever, Gastritis, Diabetes..."
+              className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-indigo-400 outline-none"
+              rows={2}
+            />
+          </div>
+          <div className="space-y-4">
+            {rows.map((row, i) => (
+              <div
+                key={row.id}
+                className="bg-white border rounded-xl p-4 shadow-sm space-y-3 relative"
+              >
+                {/* HEADER */}
+                <div className="flex justify-between items-center">
+                  <h3 className="font-semibold text-gray-700">
+                    Medicine #{i + 1}
+                  </h3>
 
-            <tbody>
-              {rows.map((row, i) => (
-                <tr key={row.id}>
-                  <td className="border px-3 py-2 text-center">{i + 1}</td>
+                  <button
+                    onClick={() =>
+                      setRows((prev) => prev.filter((_, idx) => idx !== i))
+                    }
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    ❌
+                  </button>
+                </div>
 
-                  {/* ✅ ONLY CHANGE HERE */}
-                  <td className="border px-3 py-2 relative">
+                {/* GRID */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* MEDICINE */}
+                  <div className="relative">
                     <input
                       value={row.name}
                       onChange={(e) => handleSearch(e.target.value, i)}
-                      className="w-full outline-none"
                       placeholder="Medicine name"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
                     />
 
                     {activeIndex === i && row.filteredMedicines.length > 0 && (
-                      <div className="absolute bg-white border w-full z-10 max-h-40 overflow-auto">
+                      <div className="absolute left-0 top-full mt-1 w-full bg-white border rounded-lg shadow-xl z-[9999] max-h-48 overflow-auto">
                         {row.filteredMedicines.map((m: any) => (
                           <div
                             key={m.id}
@@ -395,29 +399,29 @@ const Prescription = () => {
                                     : r,
                                 ),
                               );
-
                               setActiveIndex(null);
                             }}
-                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            className="px-3 py-2 hover:bg-indigo-50 cursor-pointer"
                           >
                             {m.name}
                           </div>
                         ))}
                       </div>
                     )}
-                  </td>
+                  </div>
 
-                  <td className="border px-3 py-2 relative">
+                  {/* DOSAGE */}
+                  <div className="relative">
                     <input
                       value={row.dosage}
                       onChange={(e) => handleDosageSearch(e.target.value, i)}
-                      className="w-full outline-none"
-                      placeholder="1-0-1"
+                      placeholder="Dosage (1-0-1)"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
                     />
 
                     {activeDosageIndex === i &&
                       row.filteredDosage.length > 0 && (
-                        <div className="absolute left-0 top-full mt-1 bg-white border w-full z-50 max-h-40 overflow-auto rounded shadow">
+                        <div className="absolute left-0 top-full mt-1 w-full bg-white border rounded-lg shadow-xl z-[9999] max-h-48 overflow-auto">
                           {row.filteredDosage.map((d, idx) => (
                             <div
                               key={idx}
@@ -429,34 +433,62 @@ const Prescription = () => {
                                       : r,
                                   ),
                                 );
-
                                 setActiveDosageIndex(null);
                               }}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                              className="px-3 py-2 hover:bg-indigo-50 cursor-pointer"
                             >
                               {d}
                             </div>
                           ))}
                         </div>
                       )}
-                  </td>
+                  </div>
 
-                  <td className="border px-3 py-2">
-                    <input
-                      value={row.duration}
-                      onChange={(e) => updateRow(i, "duration", e.target.value)}
-                      className="w-full outline-none"
-                      placeholder="5 days"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  {/* DURATION */}
+                  <input
+                    value={row.duration}
+                    onChange={(e) => updateRow(i, "duration", e.target.value)}
+                    placeholder="Duration (5 days)"
+                    className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+                  />
 
+                  {/* TIMING */}
+                  <select
+                    value={row.timing}
+                    onChange={(e) => updateRow(i, "timing", e.target.value)}
+                    className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+                  >
+                    <option value="">Timing</option>
+                    <option value="Before Food">Before Food</option>
+                    <option value="After Food">After Food</option>
+                  </select>
+
+                  {/* FREQUENCY */}
+                  <input
+                    value={row.frequency}
+                    onChange={(e) => updateRow(i, "frequency", e.target.value)}
+                    placeholder="Frequency (e.g. 2 days gap)"
+                    className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+                  />
+
+                  {/* INSTRUCTION */}
+                  <input
+                    value={row.instruction}
+                    onChange={(e) =>
+                      updateRow(i, "instruction", e.target.value)
+                    }
+                    placeholder="Instruction"
+                    className="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none col-span-1 md:col-span-3"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ADD BUTTON */}
           <button
             onClick={addRow}
-            className="mt-4 px-4 py-1.5 text-sm rounded-lg border hover:bg-gray-100"
+            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
           >
             + Add Medicine
           </button>

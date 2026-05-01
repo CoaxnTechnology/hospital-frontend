@@ -1,7 +1,15 @@
-const BASE_URL = import.meta.env.VITE_BASE_URL;
-
+//const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE_URL = "http://localhost:5000";
 export const generatePrescriptionHTML = (data: any) => {
-  const { hospital, patient, doctor, medicines, date, prescriptionId } = data;
+  const {
+    hospital,
+    patient,
+    doctor,
+    medicines,
+    date,
+    prescriptionId,
+    diagnosis,
+  } = data;
 
   const logo = hospital?.logo ? `${BASE_URL}${hospital.logo}` : "";
 
@@ -17,42 +25,21 @@ export const generatePrescriptionHTML = (data: any) => {
         font-family: Arial;
         margin: 0;
         padding: 0;
-        position: relative;
       }
 
-      .watermark {
-        position: fixed;
-        top: 30%;
-        left: 20%;
-        opacity: 0.05;
-        z-index: 0;
+      .container {
+        width: 800px;
+        margin: 0 auto;
+        padding: 20px;
       }
 
-      .watermark img {
-        width: 400px;
-      }
-
-      .left-strip {
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 10px;
-        height: 100%;
-        background: linear-gradient(to bottom, #6a11cb, #2575fc);
-      }
-
-.container {
-  width: 800px;   /* 👈 ADD THIS */
-  margin: 0 auto; /* 👈 CENTER */
-  padding: 20px;
-}
+      /* HEADER */
       .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 2px solid #000;
         padding-bottom: 10px;
-         align-items: flex-start;
       }
 
       .left {
@@ -61,27 +48,22 @@ export const generatePrescriptionHTML = (data: any) => {
         gap: 10px;
       }
 
-      .logo img {
+      .logo {
         width: 70px;
+        height: auto;
       }
 
       .hospital {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: bold;
-        color: #333;
       }
 
       .right {
         text-align: right;
-        font-size: 12px;
+        font-size: 13px;
       }
 
-      /* 🔥 IMPORTANT FIX */
-      .right div {
-        white-space: nowrap;
-      }
-
-
+      /* PATIENT */
       .patient-box {
         margin-top: 15px;
         border: 1px solid #ccc;
@@ -97,52 +79,55 @@ export const generatePrescriptionHTML = (data: any) => {
         margin-bottom: 5px;
       }
 
+      /* RX */
       .rx {
         font-size: 28px;
         font-weight: bold;
-       margin: 20px 0 10px 0;
-
+        margin: 20px 0 10px 0;
       }
 
-      /* 🔥 TABLE DESIGN */
-.medicine-table {
-  width: 100%;
-  margin: 20px auto;
-}
-      .medicine-table th {
-        border-bottom: 2px solid #000;
-        padding: 8px;
-        text-align: left;
+      /* DIAGNOSIS */
+      .diagnosis {
+        margin-top: 10px;
+        padding: 10px;
+        background: #fff7e6;
+        border-left: 4px solid #ff9800;
         font-size: 14px;
       }
 
-      .medicine-table td {
+      /* TABLE */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-top: 20px;
+      }
+
+      th, td {
         padding: 8px;
         border-bottom: 1px solid #ddd;
-        font-size: 14px;
+        font-size: 13px;
+        text-align: left;
+        word-wrap: break-word;
       }
 
-     .medicine-table th:nth-child(1),
-.medicine-table td:nth-child(1) {
-  width: 50%;
-}
+      th {
+        border-bottom: 2px solid #000;
+      }
 
-.medicine-table th:nth-child(2),
-.medicine-table td:nth-child(2) {
-  width: 25%;
-  text-align: center;
-}
+      th:nth-child(1), td:nth-child(1) { width: 20%; }
+      th:nth-child(2), td:nth-child(2) { width: 10%; }
+      th:nth-child(3), td:nth-child(3) { width: 15%; }
+      th:nth-child(4), td:nth-child(4) { width: 15%; }
+      th:nth-child(5), td:nth-child(5) { width: 15%; }
+      th:nth-child(6), td:nth-child(6) { width: 25%; }
 
-.medicine-table th:nth-child(3),
-.medicine-table td:nth-child(3) {
-  width: 25%;
-  text-align: center;
-}
-
+      /* FOOTER */
       .footer {
-        margin-top: 50px;
+        margin-top: 40px;
         display: flex;
         justify-content: space-between;
+        align-items: flex-end;
       }
 
       .signature img {
@@ -158,66 +143,62 @@ export const generatePrescriptionHTML = (data: any) => {
 
   <body>
 
-    <!-- WATERMARK -->
-    ${
-      logo
-        ? `<div class="watermark">
-            <img src="${logo}" />
-          </div>`
-        : ""
-    }
-
-    <!-- LEFT STRIP -->
-    <div class="left-strip"></div>
-
     <div class="container">
 
       <!-- HEADER -->
       <div class="header">
         <div class="left">
-          <div class="logo">
-            ${logo ? `<img src="${logo}" />` : ""}
-          </div>
+          ${
+            logo
+              ? `<img src="${logo}" class="logo" crossorigin="anonymous" />`
+              : ""
+          }
           <div>
-            <div class="hospital">${hospital?.name || "Hospital"}</div>
+            <div class="hospital">${hospital?.name || ""}</div>
             <div>${(hospital?.address || "").replace(/\n/g, "<br/>")}</div>
           </div>
         </div>
 
         <div class="right">
-          <div><b>Prescription ID:</b> ${prescriptionId || "-"}</div>
+          <div><b>ID:</b> ${prescriptionId || "-"}</div>
           <div><b>Date:</b> ${date}</div>
         </div>
       </div>
 
-      <!-- PATIENT DETAILS -->
+      <!-- PATIENT -->
       <div class="patient-box">
         <div class="row">
-          <div><b>Patient:</b> ${patient?.name || "N/A"}</div>
-          <div><b>PATIENT-ID:</b> ${patient?.id || "N/A"}</div>
+          <div><b>Patient:</b> ${patient?.name || "-"}</div>
+          <div><b>ID:</b> ${patient?.id || "-"}</div>
         </div>
-
         <div class="row">
           <div><b>Age:</b> ${patient?.age || "-"}</div>
           <div><b>Mobile:</b> ${patient?.mobile || "-"}</div>
         </div>
-
         <div class="row">
-          <div><b>Doctor:</b> ${doctor?.name || "N/A"}</div>
-          <div><b>Department:</b> ${doctor?.department || "General"}</div>
+          <div><b>Doctor:</b> ${doctor?.name || "-"}</div>
+          <div><b>Dept:</b> ${doctor?.department || "-"}</div>
         </div>
       </div>
 
       <!-- RX -->
       <div class="rx">℞</div>
 
-      <!-- 🔥 MEDICINE TABLE -->
-      <table class="medicine-table">
+      <!-- DIAGNOSIS -->
+      <div class="diagnosis">
+        <b>Diagnosis:</b> ${diagnosis || "-"}
+      </div>
+
+      <!-- MEDICINE TABLE -->
+      <table>
         <thead>
           <tr>
             <th>Medicine</th>
             <th>Dosage</th>
+            <th>Timing</th>
+            <th>Frequency</th>
             <th>Duration</th>
+            <th>Instruction</th>
           </tr>
         </thead>
 
@@ -227,8 +208,11 @@ export const generatePrescriptionHTML = (data: any) => {
               (m: any) => `
               <tr>
                 <td><b>${m?.name}</b></td>
-                <td>${m?.dosage}</td>
-                <td>${m?.duration}</td>
+                <td>${m?.dosage || "-"}</td>
+                <td>${m?.timing || "-"}</td>
+                <td>${m?.frequency || "-"}</td>
+                <td>${m?.duration || "-"}</td>
+                <td>${m?.instruction || "-"}</td>
               </tr>
             `,
             )
@@ -240,7 +224,7 @@ export const generatePrescriptionHTML = (data: any) => {
       <div class="footer">
         <div class="signature">
           <p><b>Doctor Signature</b></p>
-          <img src="${signature}" />
+          <img src="${signature}" crossorigin="anonymous" />
         </div>
 
         <div class="note">
