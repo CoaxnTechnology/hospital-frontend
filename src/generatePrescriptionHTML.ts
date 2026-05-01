@@ -168,7 +168,7 @@ export const generatePrescriptionHTML = (data: any) => {
       <div class="patient-box">
         <div class="row">
           <div><b>Patient:</b> ${patient?.name || "-"}</div>
-          <div><b>ID:</b> ${patient?.id || "-"}</div>
+          <div><b>PATIENT-ID:</b> ${patient?.id || "-"}</div>
         </div>
         <div class="row">
           <div><b>Age:</b> ${patient?.age || "-"}</div>
@@ -185,8 +185,9 @@ export const generatePrescriptionHTML = (data: any) => {
 
       <!-- DIAGNOSIS -->
       <div class="diagnosis">
-        <b>Diagnosis:</b> ${diagnosis || "-"}
-      </div>
+  <b>Diagnosis:</b><br/>
+  ${(diagnosis || "-").replace(/\n/g, "<br/>")}
+</div>
 
       <!-- MEDICINE TABLE -->
       <table>
