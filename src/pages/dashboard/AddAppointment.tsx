@@ -155,7 +155,7 @@ const AddAppointment = () => {
     }
   };
   const resetOTPFlow = () => {
-    console.log("🔄 RESET OTP FLOW");
+    console.log("🔄 RESET OTP FLOW START");
 
     setOtp("");
     setOtpSent(false);
@@ -163,11 +163,20 @@ const AddAppointment = () => {
 
     window.confirmationResult = null;
 
-    // 🔥 recaptcha reset
-    if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
-      recaptchaVerifierRef.current = null;
-    }
+    // 🔥 SAFE CLEAR (delay)
+    setTimeout(() => {
+      if (recaptchaVerifierRef.current) {
+        try {
+          recaptchaVerifierRef.current.clear();
+          console.log("✅ Recaptcha cleared");
+        } catch (e) {
+          console.log("⚠️ Clear error:", e);
+        }
+        recaptchaVerifierRef.current = null;
+      }
+    }, 300);
+
+    console.log("🔄 RESET OTP FLOW END");
   };
   // 🔥 HANDLE CHANGE
   const handleChange = (e: any) => {
@@ -182,16 +191,29 @@ const AddAppointment = () => {
     });
   };
   const setupRecaptcha = () => {
+    console.log("🧩 setupRecaptcha called");
+
     if (recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current.clear();
+      console.log("⚠️ Old recaptcha exists, clearing...");
+
+      try {
+        recaptchaVerifierRef.current.clear();
+      } catch (e) {
+        console.log("⚠️ Error clearing old recaptcha:", e);
+      }
+
       recaptchaVerifierRef.current = null;
     }
 
-    recaptchaVerifierRef.current = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      { size: "invisible" },
-    );
+    setTimeout(() => {
+      console.log("🆕 Creating new recaptcha");
+
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        auth,
+        "recaptcha-container",
+        { size: "invisible" },
+      );
+    }, 200);
   };
   const validateForm = () => {
     if (!form.patient_name.trim()) return "Enter patient name";
@@ -205,21 +227,28 @@ const AddAppointment = () => {
     return null;
   };
   const sendOtp = async () => {
+    console.log("📲 SEND OTP START");
+
     const error = validateForm();
 
     if (error) {
+      console.log("❌ VALIDATION ERROR:", error);
       alert(error);
       return;
     }
 
     try {
       setBookingLoading(true);
+
+      console.log("👉 Opening modal");
       setShowOtpModal(true);
 
       await auth.signOut();
-      resetOTPFlow(); // 🔥 ADD THIS
 
+      console.log("👉 Setting up recaptcha");
       setupRecaptcha();
+
+      console.log("👉 Calling signInWithPhoneNumber");
 
       const confirmation = await signInWithPhoneNumber(
         auth,
@@ -227,10 +256,14 @@ const AddAppointment = () => {
         recaptchaVerifierRef.current!,
       );
 
+      console.log("✅ OTP SENT SUCCESS");
+
       window.confirmationResult = confirmation;
       setOtpSent(true);
     } catch (err: any) {
+      console.error("❌ OTP ERROR:", err);
       alert(err.message);
+
       setShowOtpModal(false);
     } finally {
       setBookingLoading(false);
