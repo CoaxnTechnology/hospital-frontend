@@ -191,30 +191,34 @@ const AddAppointment = () => {
     });
   };
   const setupRecaptcha = () => {
-    console.log("🧩 setupRecaptcha called");
+  console.log("🧩 setupRecaptcha called");
 
-    if (recaptchaVerifierRef.current) {
-      console.log("⚠️ Old recaptcha exists, clearing...");
-
-      try {
-        recaptchaVerifierRef.current.clear();
-      } catch (e) {
-        console.log("⚠️ Error clearing old recaptcha:", e);
-      }
-
-      recaptchaVerifierRef.current = null;
+  if (recaptchaVerifierRef.current) {
+    try {
+      recaptchaVerifierRef.current.clear();
+    } catch (e) {
+      console.log("⚠️ clear error:", e);
     }
+    recaptchaVerifierRef.current = null;
+  }
 
-    setTimeout(() => {
-      console.log("🆕 Creating new recaptcha");
+  const container = document.getElementById("recaptcha-container");
 
-      recaptchaVerifierRef.current = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" },
-      );
-    }, 200);
-  };
+  if (!container) {
+    console.log("❌ recaptcha-container NOT FOUND");
+    return;
+  }
+
+  console.log("✅ recaptcha-container FOUND");
+
+  recaptchaVerifierRef.current = new RecaptchaVerifier(
+    auth,
+    "recaptcha-container",
+    {
+      size: "invisible",
+    }
+  );
+};
   const validateForm = () => {
     if (!form.patient_name.trim()) return "Enter patient name";
     if (!form.phone || form.phone.length !== 10) return "Enter valid phone";
@@ -232,7 +236,6 @@ const AddAppointment = () => {
     const error = validateForm();
 
     if (error) {
-      console.log("❌ VALIDATION ERROR:", error);
       alert(error);
       return;
     }
@@ -245,27 +248,34 @@ const AddAppointment = () => {
 
       await auth.signOut();
 
-      console.log("👉 Setting up recaptcha");
-      setupRecaptcha();
+      // 🔥 WAIT FOR DOM
+      setTimeout(async () => {
+        try {
+          console.log("👉 Setting up recaptcha");
+          setupRecaptcha();
 
-      console.log("👉 Calling signInWithPhoneNumber");
+          console.log("👉 Sending OTP...");
 
-      const confirmation = await signInWithPhoneNumber(
-        auth,
-        "+91" + form.phone,
-        recaptchaVerifierRef.current!,
-      );
+          const confirmation = await signInWithPhoneNumber(
+            auth,
+            "+91" + form.phone,
+            recaptchaVerifierRef.current!,
+          );
 
-      console.log("✅ OTP SENT SUCCESS");
+          console.log("✅ OTP SENT");
 
-      window.confirmationResult = confirmation;
-      setOtpSent(true);
-    } catch (err: any) {
-      console.error("❌ OTP ERROR:", err);
-      alert(err.message);
-
-      setShowOtpModal(false);
-    } finally {
+          window.confirmationResult = confirmation;
+          setOtpSent(true);
+        } catch (err: any) {
+          console.error("❌ OTP ERROR:", err);
+          alert(err.message);
+          setShowOtpModal(false);
+        } finally {
+          setBookingLoading(false);
+        }
+      }, 400); // 🔥 IMPORTANT DELAY
+    } catch (err) {
+      console.error(err);
       setBookingLoading(false);
     }
   };
