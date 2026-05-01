@@ -154,7 +154,21 @@ const AddAppointment = () => {
       console.error("❌ PATIENT LOAD ERROR:", err);
     }
   };
+  const resetOTPFlow = () => {
+    console.log("🔄 RESET OTP FLOW");
 
+    setOtp("");
+    setOtpSent(false);
+    setShowOtpModal(false);
+
+    window.confirmationResult = null;
+
+    // 🔥 recaptcha reset
+    if (recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current.clear();
+      recaptchaVerifierRef.current = null;
+    }
+  };
   // 🔥 HANDLE CHANGE
   const handleChange = (e: any) => {
     if (e.target.name === "phone") {
@@ -168,13 +182,16 @@ const AddAppointment = () => {
     });
   };
   const setupRecaptcha = () => {
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(
-        auth,
-        "recaptcha-container",
-        { size: "invisible" },
-      );
+    if (recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current.clear();
+      recaptchaVerifierRef.current = null;
     }
+
+    recaptchaVerifierRef.current = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      { size: "invisible" },
+    );
   };
   const validateForm = () => {
     if (!form.patient_name.trim()) return "Enter patient name";
@@ -200,6 +217,8 @@ const AddAppointment = () => {
       setShowOtpModal(true);
 
       await auth.signOut();
+      resetOTPFlow(); // 🔥 ADD THIS
+
       setupRecaptcha();
 
       const confirmation = await signInWithPhoneNumber(
@@ -488,10 +507,13 @@ const AddAppointment = () => {
               <div id="recaptcha-container"></div>
 
               <button
-                onClick={() => setShowOtpModal(false)}
+                onClick={resetOTPFlow}
                 className="text-red-500 text-sm mt-2"
               >
                 Cancel
+              </button>
+              <button onClick={sendOtp} className="text-blue-600 text-sm mt-2">
+                🔁 Resend OTP
               </button>
             </div>
           </div>
