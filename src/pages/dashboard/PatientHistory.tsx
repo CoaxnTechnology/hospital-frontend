@@ -1,4 +1,4 @@
- const BASE_URL = import.meta.env.VITE_BASE_URL
+  const BASE_URL = import.meta.env.VITE_BASE_URL
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/dashboard/layout/DashboardLayout";
@@ -186,49 +186,91 @@ const PatientHistory = () => {
   }, [id]);
   const handleViewPrescription = async (prescriptionId: number) => {
     try {
-      const res = await fetch(`${BASE_URL}/api/prescription/${prescriptionId}`);
+      console.log("🖨️ VIEW PRESCRIPTION:", prescriptionId);
 
+      if (!hospital) {
+        console.log("❌ Hospital not loaded");
+        return alert("Hospital not loaded");
+      }
+
+      // 🔥 CORRECT API CALL
+      console.log("📡 Fetching prescription...");
+      const res = await fetch(`${BASE_URL}/api/prescription/${prescriptionId}`);
       const data = await res.json();
+
+      console.log("📥 RESPONSE:", data);
+
       const rows = data.data;
 
       if (!rows || rows.length === 0) {
-        alert("No prescription data");
-        return;
+        console.log("❌ No data");
+        return alert("No prescription data");
       }
 
       const first = rows[0];
 
+      console.log("👤 FIRST ROW:", first);
+      console.log("📊 ALL ROWS:", rows);
+
+      // 🔥 IMPORTANT FIX HERE
       const html = generatePrescriptionHTML({
         hospital,
         prescriptionId,
+
         patient: {
           id: first.patient_id,
           name: first.patient_name,
           age: first.age,
           mobile: first.mobile,
         },
+
         doctor: {
           name: first.doctor_name,
           department: first.department,
         },
+
+        diagnosis: first.diagnosis, // ✅ ADD THIS
+
         medicines: rows.map((r: any) => ({
           name: r.medicine_name,
           dosage: r.dosage,
           duration: r.duration,
+          timing: r.timing, // ✅ FIX
+          frequency: r.frequency, // ✅ FIX
+          instruction: r.instruction, // ✅ FIX
         })),
+
         date: new Date().toLocaleDateString(),
       });
 
+      console.log("📄 HTML READY");
+
+      // 🔥 OPEN WINDOW
       const win = window.open("", "_blank");
       win.document.write(html);
       win.document.close();
 
-      // 🔥 auto print optional
-      setTimeout(() => {
+      // 🔥 WAIT FOR IMAGES (LOGO FIX)
+      const images = win.document.images;
+      let loaded = 0;
+
+      if (images.length === 0) {
         win.print();
-      }, 300);
+      } else {
+        for (let i = 0; i < images.length; i++) {
+          images[i].onload = images[i].onerror = () => {
+            loaded++;
+            if (loaded === images.length) {
+              setTimeout(() => {
+                console.log("🖨️ PRINTING...");
+                win.print();
+              }, 300);
+            }
+          };
+        }
+      }
     } catch (err) {
-      console.error(err);
+      console.error("❌ VIEW ERROR:", err);
       alert("Error loading prescription");
     }
   };
